@@ -1,0 +1,17 @@
+[package]
+name = "terminfokit"
+description = "Pure-Rust terminfo compiler suite: compile (tic), decompile (infocmp), and expand (tput) terminal descriptions"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+keywords = ["terminfo", "tic", "infocmp", "curses", "terminal"]
+categories = ["command-line-interface", "parser-implementations", "no-std"]
+
+[features]
+default = ["std"]
+std = ["alloc"]
+alloc = []
+
+[dependencies]
