@@ -37,15 +37,18 @@ the release-plz workflow, release the already reviewed `0.1.0` commit manually:
 
 1. Create a GitHub environment named `release` and require maintainer approval.
 2. Enable immutable GitHub Releases.
-3. Create a GitHub App with repository **Contents** and **Pull requests** set to
+3. If repository Actions are allowlisted, allow only the pinned
+   `release-plz/action@2eb1d8bcb770b4c48ccfaad919734b38b51958c9` revision
+   and keep SHA pinning required.
+4. Create a GitHub App with repository **Contents** and **Pull requests** set to
    read/write. Set **Administration** to read/write so the App can create
    protected tags, disable its webhook, and install it only on this repository.
-4. Store the App client ID in the repository variable
+5. Store the App client ID in the repository variable
    `RELEASE_PLZ_APP_CLIENT_ID` and its private key in the repository secret
    `RELEASE_PLZ_APP_PRIVATE_KEY`.
-5. Protect `v*` tags with a repository ruleset and add the App to the bypass
+6. Protect `v*` tags with a repository ruleset and add the App to the bypass
    list. Release maintainers may retain a manual bootstrap path.
-6. Complete the `0.1.0` bootstrap above, then configure both crates.io trusted
+7. Complete the `0.1.0` bootstrap above, then configure both crates.io trusted
    publishers. Remove any long-lived CI publishing token.
 
 ## Each release
