@@ -11,4 +11,4 @@ repository.workspace = true
 
 [dependencies]
 terminfokit = { version = "=1.0.0-alpha.1", path = "../terminfokit" }
-sha2 = "0.10"
+sha2 = "0.11"
