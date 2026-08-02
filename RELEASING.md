@@ -36,19 +36,23 @@ the release-plz workflow, release the already reviewed `0.1.0` commit manually:
 ## One-time repository setup
 
 1. Create a GitHub environment named `release` and require maintainer approval.
-2. Enable immutable GitHub Releases.
-3. If repository Actions are allowlisted, allow only the pinned
+2. Create a second environment named `release-plz` with no required reviewers
+   and a deployment branch policy allowing only `main`. Keep the App
+   credentials here so routine pushes cannot access them from another branch.
+3. Enable immutable GitHub Releases.
+4. If repository Actions are allowlisted, allow only the pinned
    `release-plz/action@2eb1d8bcb770b4c48ccfaad919734b38b51958c9` revision
    and keep SHA pinning required.
-4. Create a GitHub App with repository **Contents** and **Pull requests** set to
-   read/write. Set **Administration** to read/write so the App can create
-   protected tags, disable its webhook, and install it only on this repository.
-5. Store the App client ID in the repository variable
-   `RELEASE_PLZ_APP_CLIENT_ID` and its private key in the repository secret
+5. Use the account-wide `p4suta-release-plz` GitHub App already installed on
+   this repository. It needs repository **Contents** and **Pull requests**
+   read/write access; do not create a repository-specific App.
+6. Store its client ID as the `release-plz` environment variable
+   `RELEASE_PLZ_APP_CLIENT_ID` and its private key as the environment secret
    `RELEASE_PLZ_APP_PRIVATE_KEY`.
-6. Protect `v*` tags with a repository ruleset and add the App to the bypass
-   list. Release maintainers may retain a manual bootstrap path.
-7. Complete the `0.1.0` bootstrap above, then configure both crates.io trusted
+7. Protect existing `v*` tags from update, force-update, and deletion with a
+   repository ruleset. Do not restrict tag creation, so the shared App does not
+   need an Administration permission or ruleset bypass.
+8. Complete the `0.1.0` bootstrap above, then configure both crates.io trusted
    publishers. Remove any long-lived CI publishing token.
 
 ## Each release

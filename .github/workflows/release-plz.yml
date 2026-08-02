@@ -15,28 +15,59 @@ permissions:
 jobs:
   release:
     name: Release-plz release
-    if: ${{ github.repository_owner == 'P4suta' && vars.RELEASE_PLZ_APP_CLIENT_ID != '' }}
+    if: ${{ github.repository_owner == 'P4suta' }}
     runs-on: ubuntu-latest
+    environment: release-plz
     steps:
+      - name: Check release App credentials
+        id: credentials
+        shell: bash
+        env:
+          APP_CLIENT_ID: ${{ vars.RELEASE_PLZ_APP_CLIENT_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.RELEASE_PLZ_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$APP_CLIENT_ID" && -z "$APP_PRIVATE_KEY" ]]; then
+            echo "::notice::Release automation is dormant until the release-plz Environment secret is configured."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          elif [[ -z "$APP_CLIENT_ID" || -z "$APP_PRIVATE_KEY" ]]; then
+            echo "::error::Configure both release-plz App credentials."
+            exit 1
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout repository
+        if: steps.credentials.outputs.configured == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Install Rust toolchain
+        if: steps.credentials.outputs.configured == 'true'
         uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
         with:
           toolchain: stable
 
       - name: Generate GitHub App token
         id: app-token
+        if: steps.credentials.outputs.configured == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
         with:
           client-id: ${{ vars.RELEASE_PLZ_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_PLZ_APP_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Verify release App identity
+        if: steps.credentials.outputs.configured == 'true'
+        shell: bash
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: test "$APP_SLUG" = "p4suta-release-plz"
 
       - name: Create release tag
+        if: steps.credentials.outputs.configured == 'true'
         uses: release-plz/action@2eb1d8bcb770b4c48ccfaad919734b38b51958c9  # v0.5.131
         with:
           command: release
@@ -45,31 +76,63 @@ jobs:
 
   release-pr:
     name: Release-plz PR
-    if: ${{ github.repository_owner == 'P4suta' && vars.RELEASE_PLZ_APP_CLIENT_ID != '' }}
+    if: ${{ github.repository_owner == 'P4suta' }}
     runs-on: ubuntu-latest
+    environment: release-plz
     concurrency:
       group: release-plz-${{ github.ref }}
       cancel-in-progress: false
     steps:
+      - name: Check release App credentials
+        id: credentials
+        shell: bash
+        env:
+          APP_CLIENT_ID: ${{ vars.RELEASE_PLZ_APP_CLIENT_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.RELEASE_PLZ_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$APP_CLIENT_ID" && -z "$APP_PRIVATE_KEY" ]]; then
+            echo "::notice::Release automation is dormant until the release-plz Environment secret is configured."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          elif [[ -z "$APP_CLIENT_ID" || -z "$APP_PRIVATE_KEY" ]]; then
+            echo "::error::Configure both release-plz App credentials."
+            exit 1
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout repository
+        if: steps.credentials.outputs.configured == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Install Rust toolchain
+        if: steps.credentials.outputs.configured == 'true'
         uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
         with:
           toolchain: stable
 
       - name: Generate GitHub App token
         id: app-token
+        if: steps.credentials.outputs.configured == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
         with:
           client-id: ${{ vars.RELEASE_PLZ_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_PLZ_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Verify release App identity
+        if: steps.credentials.outputs.configured == 'true'
+        shell: bash
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: test "$APP_SLUG" = "p4suta-release-plz"
 
       - name: Open or update release PR
+        if: steps.credentials.outputs.configured == 'true'
         uses: release-plz/action@2eb1d8bcb770b4c48ccfaad919734b38b51958c9  # v0.5.131
         with:
           command: release-pr
