@@ -218,7 +218,9 @@ and source inheritance follows [`terminfo(5)`](https://invisible-island.net/ncur
 ## Contributing and security
 
 See [CONTRIBUTING.md](https://github.com/P4suta/terminfokit/blob/main/CONTRIBUTING.md)
-for the development workflow. Please report suspected vulnerabilities through
+for the development workflow. Changes to `main` go through pull requests with
+CI, dependency review, and CodeQL checks; protected-branch commits are signed
+and the history remains linear. Please report suspected vulnerabilities through
 [GitHub private vulnerability reporting](https://github.com/P4suta/terminfokit/security/advisories/new),
 not a public issue; details are in the
 [security policy](https://github.com/P4suta/terminfokit/blob/main/SECURITY.md).
