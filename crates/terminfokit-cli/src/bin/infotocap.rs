@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 use std::fs;
 use std::io::{self, IsTerminal, Read};
 use std::process::ExitCode;
@@ -9,16 +13,12 @@ use terminfokit::termcap::{ConvertOptions, from_entry};
 use terminfokit_cli::{DiagnosticFormat, Reporter};
 
 #[derive(Debug, Parser)]
-#[command(
-    name = "infotocap",
-    version,
-    about = "Convert terminfo source to termcap source"
-)]
+#[command(name = "infotocap", version, about = "Convert terminfo to termcap")]
 struct Args {
-    /// Use the ncurses lossy compatibility policy.
+    /// Use ncurses lossy conversion.
     #[arg(short = 'K')]
     compatibility: bool,
-    /// Do not enforce the historical 1023-byte limit.
+    /// Disable the 1023-byte limit.
     #[arg(short = 'T')]
     unlimited: bool,
     #[arg(short = 'v', action = ArgAction::Count)]

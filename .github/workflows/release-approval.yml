@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+name: Approve release
+
+on:
+  workflow_call:
+    inputs:
+      plan:
+        description: Dist release plan
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  approve:
+    name: Approve publication
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - name: Record
+        run: echo "Release approved for ${{ fromJSON(inputs.plan).announcement_tag }}"

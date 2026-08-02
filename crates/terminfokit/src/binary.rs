@@ -1,4 +1,8 @@
-//! ncurses-compatible compiled terminfo decoding and encoding.
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! Compiled terminfo decoding and encoding.
 
 use alloc::string::ToString;
 use alloc::vec::Vec;
@@ -66,7 +70,7 @@ impl BinaryLimits {
         }
     }
 
-    /// Returns limits which accept every representable allocation size.
+    /// Returns limits for every representable allocation size.
     pub const fn unlimited() -> Self {
         Self {
             max_input: usize::MAX,
@@ -214,7 +218,7 @@ impl BinaryDocument {
         self.magic
     }
 
-    /// Preserve the original bytes until the logical entry is edited.
+    /// Returns original bytes until the entry is edited.
     pub fn to_bytes(&self) -> Result<Vec<u8>, EncodeError> {
         if !self.edited {
             return Ok(self.original.clone());
@@ -234,7 +238,7 @@ impl BinaryDocument {
     }
 }
 
-/// Decode a compiled terminfo entry and retain its representation.
+/// Decodes a compiled entry and retains its representation.
 pub fn decode(data: &[u8]) -> Result<BinaryDocument, DecodeError> {
     decode_with(data, DecodeOptions::default())
 }
@@ -357,11 +361,8 @@ fn decode_extended(
     let bool_count = cursor.count()?;
     let number_count = cursor.count()?;
     let string_count = cursor.count()?;
-    // Since ncurses 6.2 this field is the number of strings which are
-    // actually present in the extended string table: every capability name
-    // plus every non-cancelled, non-absent string value.  Older writers used
-    // the number of offset slots instead, so decoding deliberately treats it
-    // as representation metadata rather than rejecting the old value.
+    // ncurses 6.2+ counts names and present string values here. Older writers
+    // counted offset slots, so accept either value as representation metadata.
     let string_usage = cursor.count()?;
     let table_size = cursor.count()?;
     let name_count = bool_count
@@ -517,7 +518,7 @@ fn string_at(offset: i16, table: &[u8], base: usize, at: usize) -> Result<&[u8],
     Ok(&tail[..end])
 }
 
-/// Encode a logical terminfo entry.
+/// Encodes a logical terminfo entry.
 pub fn encode(entry: &Entry, options: EncodeOptions) -> Result<Vec<u8>, EncodeError> {
     let magic = choose_magic(entry, options)?;
     let names = entry.names.packed();

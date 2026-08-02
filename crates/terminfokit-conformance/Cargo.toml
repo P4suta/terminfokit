@@ -1,6 +1,10 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
 [package]
 name = "terminfokit-conformance"
-description = "Differential-testing harness: terminfokit vs ncurses tic as a bit-exact oracle"
+description = "Compare terminfokit output with ncurses tic"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -10,5 +14,5 @@ authors.workspace = true
 repository.workspace = true
 
 [dependencies]
-terminfokit = { version = "=1.0.0-alpha.1", path = "../terminfokit" }
+terminfokit = { version = "=0.1.0", path = "../terminfokit" }
 sha2 = "0.11"

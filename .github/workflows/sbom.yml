@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+name: Build SBOM
+
+on:
+  workflow_call:
+    inputs:
+      plan:
+        description: Dist release plan
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  sbom:
+    name: Build CLI SBOM
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6
+        with:
+          persist-credentials: false
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+        with:
+          toolchain: stable
+
+      - name: Install cargo-cyclonedx
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 -LsSf \
+            https://github.com/CycloneDX/cyclonedx-rust-cargo/releases/download/cargo-cyclonedx-0.5.5/cargo-cyclonedx-installer.sh |
+            sh
+
+      - name: Generate SBOM
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p target/distrib
+          cargo cyclonedx \
+            --manifest-path crates/terminfokit-cli/Cargo.toml \
+            --format json \
+            --target all \
+            --no-build-deps \
+            --spec-version 1.5
+          mv crates/terminfokit-cli/terminfokit-cli.cdx.json \
+            target/distrib/terminfokit-cli.cdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: artifacts-sbom
+          path: target/distrib/terminfokit-cli.cdx.json

@@ -1,4 +1,8 @@
-//! Deterministic terminfo source formatting and logical diffs.
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! Terminfo formatting and logical diffs.
 
 use alloc::format;
 use alloc::string::String;
@@ -125,7 +129,7 @@ impl Default for FormatOptions {
     }
 }
 
-/// Reusable deterministic terminfo source formatter.
+/// Terminfo source formatter.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SourceFormatter {
     options: FormatOptions,
@@ -440,7 +444,6 @@ impl Entry {
         EntryDiff { differences }
     }
 
-    /// Construct the explicit overrides needed to inherit from another entry.
     /// Computes direct overrides relative to one base entry.
     pub fn relative_to(&self, base: &Self) -> RelativeEntry {
         let mut overrides = Entry::empty(self.names.clone());
@@ -517,7 +520,6 @@ impl Entry {
         }
     }
 
-    /// Construct overrides relative to an ordered list of `use=` bases.
     /// Computes direct overrides relative to multiple ordered bases.
     pub fn relative_to_many(&self, bases: &[&Self]) -> RelativeEntry {
         if bases.is_empty() {

@@ -1,4 +1,8 @@
-name: BSD release checks
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+name: BSD checks
 
 on:
   workflow_dispatch:

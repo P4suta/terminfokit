@@ -1,4 +1,8 @@
-//! Parsing of unresolved terminfo source entries.
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! Unresolved terminfo source parsing.
 
 use alloc::boxed::Box;
 use alloc::string::String;
@@ -125,13 +129,9 @@ impl SourceEntry {
         })
     }
 
-    /// Returns the names interpreted according to terminfo's
-    /// primary/alias/verbose-name rules.
+    /// Interprets names for lookup using ncurses rules.
     ///
-    /// [Self::names] exposes the lossless sequence of fields as written,
-    /// while this method exposes only the primary name and aliases as lookup
-    /// targets. A final field without whitespace is both an alias and the
-    /// verbose name, matching ncurses.
+    /// A final field without whitespace is both an alias and the verbose name.
     pub fn entry_names(&self) -> Result<EntryNames, BuildError> {
         EntryNames::from_source_fields(&self.names)
     }
@@ -257,7 +257,7 @@ impl SourceDocument {
         SourceEditor { document: self }
     }
 
-    /// Emit the original document with only explicitly edited tokens replaced.
+    /// Returns the original bytes with explicit token edits.
     pub fn to_bytes_preserve(&self) -> Vec<u8> {
         let mut output = self.original.clone();
         let mut edits = self.edits.clone();
@@ -271,7 +271,7 @@ impl SourceDocument {
         output
     }
 
-    /// Emit deterministic source, intentionally dropping comments and spacing.
+    /// Returns deterministic source without comments or original spacing.
     pub fn to_bytes_canonical(&self) -> Vec<u8> {
         let mut output = String::new();
         for entry in &self.entries {
@@ -289,8 +289,7 @@ impl SourceDocument {
         output.into_bytes()
     }
 
-    /// Emit deterministic unresolved source wrapped to the requested width.
-    /// Unlike compilation this preserves `use=` fields as inheritance edges.
+    /// Returns wrapped deterministic source while preserving `use=` fields.
     pub fn to_bytes_canonical_with_width(&self, width: usize) -> Vec<u8> {
         let mut output = String::new();
         for entry in &self.entries {
@@ -316,7 +315,7 @@ impl SourceDocument {
     }
 }
 
-/// A checked token editor which never rewrites unrelated source text.
+/// A checked token editor that preserves unrelated source bytes.
 pub struct SourceEditor<'a> {
     document: &'a mut SourceDocument,
 }
@@ -384,7 +383,7 @@ fn render_capability(capability: &Capability) -> String {
     }
 }
 
-/// Parse all entries without resolving inheritance references.
+/// Parses all entries without resolving inheritance.
 pub fn parse(source: &[u8]) -> Result<SourceDocument, ParseError> {
     parse_with(source, ParseOptions::default())
 }
@@ -608,9 +607,8 @@ fn parse_record(record: &LogicalRecord) -> Result<SourceEntry, ParseError> {
 }
 
 fn parse_capability(field: &[u8], span: Span) -> Result<Capability, ParseError> {
-    // The first non-escaped value separator determines the capability kind.
-    // In particular, an '@' at the end of a string value such as ich1=\E[@
-    // is data rather than a cancellation marker.
+    // The first unescaped separator determines the kind; a trailing '@' in a
+    // string value such as ich1=\E[@ is data, not cancellation.
     if let Some((index, separator)) = find_first_unescaped(field, b"#=") {
         let name = validate_cap_name(&field[..index], span)?;
         let literal = &field[index + 1..];

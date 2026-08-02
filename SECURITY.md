@@ -1,29 +1,29 @@
+<!--
+SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+
+SPDX-License-Identifier: MIT OR Apache-2.0
+-->
+
 # Security policy
 
 ## Supported versions
 
-terminfokit is pre-release software. Only the `main` branch is currently
-supported; there is no supported packaged release yet. Older snapshots are not
-maintained.
+Only the `main` branch is supported. There is no supported packaged release.
 
 ## Reporting a vulnerability
 
 Do not open a public issue for a suspected vulnerability.
 
 Use
-[GitHub private vulnerability reporting](https://github.com/P4suta/terminfokit/security/advisories/new)
-to share a description, affected inputs or platforms, impact, and a minimal
-reproducer when one is available. Reports may cover the Rust API, compatible
-CLI frontends, binary/source parsers, database search and installation, escape
-expansion, or CI and supply-chain configuration.
+[GitHub private vulnerability reporting](https://github.com/P4suta/terminfokit/security/advisories/new).
+Include the affected inputs or platforms, impact, and a minimal reproducer when
+available.
 
-The maintainer will aim to acknowledge a report within seven days, validate its
-scope, and coordinate disclosure and remediation through the private advisory.
-Please allow a reasonable remediation window before publishing details.
+The maintainer aims to acknowledge reports within seven days and coordinate
+validation, remediation, and disclosure in the private advisory.
 
 ## Hardening and disclosure
 
-The public repository uses dependency alerts and updates, secret scanning with
-push protection, CodeQL advanced setup, dependency review, pinned GitHub
-Actions, and protected default-branch rules. Valid fixes are credited in the
-advisory unless the reporter prefers to remain anonymous.
+The repository uses dependency alerts and updates, secret scanning, CodeQL,
+dependency review, pinned GitHub Actions, and branch protection. Advisories
+credit valid reports unless the reporter requests anonymity.

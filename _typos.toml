@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+[files]
+ignore-hidden = false
+extend-exclude = [
+    ".git/",
+    "crates/terminfokit/capabilities.tsv",
+]
+
+[default.extend-words]
+parm = "parm"

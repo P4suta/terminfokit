@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 1998-2017 Free Software Foundation, Inc.
+# SPDX-FileCopyrightText: 2018-2025 Thomas E. Dickey
+#
+# SPDX-License-Identifier: X11
+
 # kind, long name, terminfo name, termcap name, parameter signature (n/b), introduced version
 bool	auto_left_margin	bw	bw	-	system-v
 bool	auto_right_margin	am	am	-	system-v

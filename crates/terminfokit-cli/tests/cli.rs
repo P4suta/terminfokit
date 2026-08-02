@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 use std::io::Write;
 use std::process::{Command, Output, Stdio};
 
@@ -36,7 +40,7 @@ fn unsupported_operations_are_usage_errors_before_external_lookup() {
         .output()
         .expect("run tput");
     assert_eq!(output.status.code(), Some(2));
-    assert!(String::from_utf8_lossy(&output.stderr).contains("no terminal name"));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("terminal required"));
 
     let output = Command::new(env!("CARGO_BIN_EXE_infocmp"))
         .arg("-e")
@@ -44,7 +48,7 @@ fn unsupported_operations_are_usage_errors_before_external_lookup() {
         .output()
         .expect("run infocmp");
     assert_eq!(output.status.code(), Some(2));
-    assert!(String::from_utf8_lossy(&output.stderr).contains("outside v1"));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("unsupported"));
 }
 
 #[test]
@@ -226,7 +230,7 @@ fn infocmp_source_file_mode_matches_aliases_and_reports_unmatched_entries() {
         String::from_utf8_lossy(&output.stderr)
     );
     let stdout = String::from_utf8(output.stdout).unwrap();
-    assert!(stdout.contains("comparing a to shared."));
+    assert!(stdout.contains("a vs shared"));
     assert!(stdout.contains("left-only: no match"));
     assert!(stdout.contains("right-only: no match"));
 

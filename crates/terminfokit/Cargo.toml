@@ -1,13 +1,18 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
 [package]
 name = "terminfokit"
-description = "Pure-Rust terminfo compiler suite: compile (tic), decompile (infocmp), and expand (tput) terminal descriptions"
+description = "Terminfo parsing, compilation, formatting, database access, and expansion"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
+license = "(MIT OR Apache-2.0) AND X11"
 authors.workspace = true
 repository.workspace = true
-publish = false
+homepage.workspace = true
+publish = ["crates-io"]
 readme = "README.md"
 documentation = "https://docs.rs/terminfokit"
 keywords = ["terminfo", "tic", "infocmp", "curses", "terminal"]

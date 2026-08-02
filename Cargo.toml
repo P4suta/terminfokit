@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
 [workspace]
 resolver = "3"
 members = [
@@ -7,9 +11,48 @@ members = [
 ]
 
 [workspace.package]
-version = "1.0.0-alpha.1"
+version = "0.1.0"
 edition = "2024"
 rust-version = "1.88"
 license = "MIT OR Apache-2.0"
 authors = ["Yasunobu Sakashita"]
 repository = "https://github.com/P4suta/terminfokit"
+homepage = "https://github.com/P4suta/terminfokit"
+
+[workspace.metadata.dist]
+cargo-dist-version = "0.32.0"
+ci = ["github"]
+hosting = ["github"]
+packages = ["terminfokit-cli"]
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "x86_64-pc-windows-msvc",
+    "x86_64-apple-darwin",
+    "aarch64-apple-darwin",
+]
+installers = ["shell", "powershell"]
+unix-archive = ".tar.gz"
+windows-archive = ".zip"
+checksum = "sha256"
+source-tarball = true
+pr-run-mode = "plan"
+tag-namespace = "v"
+cargo-auditable = true
+github-attestations = true
+github-attestations-phase = "host"
+github-attestations-filters = ["*"]
+github-release = "host"
+global-artifacts-jobs = ["./sbom", "./release-approval"]
+publish-jobs = ["./publish-crates"]
+
+[workspace.metadata.dist.github-action-commits]
+"actions/checkout" = "d23441a48e516b6c34aea4fa41551a30e30af803"
+"actions/upload-artifact" = "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
+"actions/download-artifact" = "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c"
+"actions/attest" = "508db95dd578ae2727ebd6217d5ba78e4fbda05d"
+"Swatinem/rust-cache" = "42dc69e1aa15d09112580998cf2ef0119e2e91ae"
+"actions/setup-node" = "249970729cb0ef3589644e2896645e5dc5ba9c38"
+
+[profile.dist]
+inherits = "release"
+lto = "thin"

@@ -1,5 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
 name: Bug report
-description: Report reproducible incorrect behavior.
+description: Report a reproducible bug.
 title: "bug: "
 labels:
   - "type: bug"
@@ -8,20 +12,20 @@ body:
   - type: markdown
     attributes:
       value: |
-        Do not include secrets or unpatched vulnerability details. Use private
-        vulnerability reporting for security issues.
+        Do not include secrets or undisclosed vulnerabilities. Report security
+        issues privately.
   - type: textarea
     id: summary
     attributes:
       label: What happened?
-      description: Describe the observed and expected behavior.
+      description: State the observed and expected behavior.
     validations:
       required: true
   - type: textarea
     id: reproduce
     attributes:
       label: Reproduction
-      description: Include the smallest source, binary, command, or Rust example that reproduces the issue.
+      description: Provide the smallest reproducing input or command.
       render: text
     validations:
       required: true
@@ -29,7 +33,7 @@ body:
     id: version
     attributes:
       label: Version or commit
-      placeholder: 1.0.0-alpha.1 or commit SHA
+      placeholder: 0.1.0 or commit SHA
     validations:
       required: true
   - type: input
@@ -43,5 +47,5 @@ body:
     id: diagnostics
     attributes:
       label: Diagnostics
-      description: Paste relevant stderr, diagnostics, or a backtrace.
+      description: Paste relevant diagnostics or a backtrace.
       render: text

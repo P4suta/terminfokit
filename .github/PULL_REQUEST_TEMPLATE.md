@@ -1,19 +1,25 @@
+<!--
+SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+
+SPDX-License-Identifier: MIT OR Apache-2.0
+-->
+
 ## Summary
 
-Describe the outcome and why the change is needed.
+Describe the result and reason.
 
 Fixes #
 
 ## Validation
 
-- [ ] Added or updated focused tests, or explained why none are needed
+- [ ] Added focused tests or explained why none are needed
 - [ ] Ran `cargo fmt --all -- --check`
-- [ ] Ran relevant `cargo test` and Clippy checks
+- [ ] Ran relevant tests and Clippy checks
 - [ ] Ran the full ncurses oracle when parser, resolver, schema, or binary output changed
-- [ ] Updated public documentation for API or CLI changes
+- [ ] Documented API or CLI changes
 - [ ] Kept both README copies identical
 
 ## Compatibility
 
-Call out public API changes, ncurses behavior changes, platform-specific
-effects, or newly accepted differences. Write "None" when this does not apply.
+List public API, ncurses compatibility, platform, or accepted-difference
+changes. Write "None" when there are none.

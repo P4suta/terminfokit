@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 use std::fs;
 use std::io::{self, IsTerminal, Read, Write};
 use std::path::Path;
@@ -10,20 +14,16 @@ use terminfokit::format::{FormatOptions, Layout, SourceFormatter};
 use terminfokit_cli::{DiagnosticFormat, Reporter};
 
 #[derive(Debug, Parser)]
-#[command(
-    name = "captoinfo",
-    version,
-    about = "Convert termcap source to terminfo source"
-)]
+#[command(name = "captoinfo", version, about = "Convert termcap to terminfo")]
 struct Args {
     #[arg(short = 'v', action = ArgAction::Count)]
     verbose: u8,
     #[arg(short = 'w', default_value_t = 60)]
     width: usize,
-    /// Resolve tc= inheritance, including installed parent entries.
+    /// Resolve tc= using input and installed entries.
     #[arg(short = 'r')]
     resolve: bool,
-    /// Preserve user-defined capabilities while resolving.
+    /// Keep user-defined capabilities.
     #[arg(short = 'x')]
     extended: bool,
     #[arg(long, value_enum, default_value_t = DiagnosticFormat::Human)]
@@ -75,7 +75,7 @@ pub fn main_from(arguments: Vec<String>) -> ExitCode {
         } else {
             reporter.error(
                 "TIKC307",
-                "no input; pass a file, pipe termcap source, or set TERMCAP/TERM",
+                "input required; use a file, stdin, TERMCAP, or TERM",
             );
             return ExitCode::from(2);
         }

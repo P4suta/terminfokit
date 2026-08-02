@@ -1,5 +1,8 @@
-//! Offline differential-test support for comparing terminfokit output with a
-//! pinned ncurses `tic` oracle. Normal workspace tests never use the network.
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! Offline output comparison with pinned ncurses `tic`.
 
 #![forbid(unsafe_code)]
 
@@ -259,7 +262,7 @@ fn collect(
     Ok(())
 }
 
-/// Configuration for the one-command ncurses oracle comparison.
+/// Configuration for a full ncurses comparison.
 #[derive(Debug, Clone)]
 pub struct FullRunConfig {
     pub archive: PathBuf,
@@ -268,7 +271,7 @@ pub struct FullRunConfig {
     pub allowlist: Vec<AllowlistedDifference>,
 }
 
-/// Result for one of the normal or extended compilation fixtures.
+/// Result for one normal or extended fixture.
 #[derive(Debug, Clone)]
 pub struct FixtureReport {
     pub fixture: String,
@@ -278,7 +281,7 @@ pub struct FixtureReport {
     pub roundtrip_mismatches: Vec<RoundtripMismatch>,
 }
 
-/// One oracle file that could not be decoded and re-encoded byte-for-byte.
+/// A file that did not decode and re-encode exactly.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RoundtripMismatch {
     /// Path relative to the compiled database root.
@@ -287,7 +290,7 @@ pub struct RoundtripMismatch {
     pub reason: String,
 }
 
-/// Result of the complete pinned conformance run.
+/// Result of a full pinned conformance run.
 #[derive(Debug, Clone)]
 pub struct FullRunReport {
     pub logical_entries: usize,
@@ -303,11 +306,7 @@ impl FullRunReport {
     }
 }
 
-/// Verifies, builds, compiles, and compares both pinned ncurses fixtures.
-///
-/// The caller supplies the already-downloaded archive, keeping ordinary tests
-/// network-free. External commands are limited to tar, sh, and make while
-/// building the pinned ncurses tic oracle.
+/// Compares both fixtures from a downloaded archive using tar, sh, and make.
 pub fn run_full(config: &FullRunConfig) -> io::Result<FullRunReport> {
     verify_hash(&config.archive, ARCHIVE_SHA256, "ncurses archive")?;
     if config.work.exists() {

@@ -202,7 +202,7 @@ dependencies = [
 
 [[package]]
 name = "terminfokit"
-version = "1.0.0-alpha.1"
+version = "0.1.0"
 dependencies = [
  "atomic-write-file",
 ]

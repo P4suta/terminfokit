@@ -1,4 +1,8 @@
 #!/usr/bin/env sh
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
 set -eu
 
 destination=${1:-target/oracle}

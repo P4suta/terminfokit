@@ -1,8 +1,12 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
 blank_issues_enabled: false
 contact_links:
-  - name: Report a security vulnerability
+  - name: Security report
     url: https://github.com/P4suta/terminfokit/security/advisories/new
-    about: Report suspected vulnerabilities privately.
-  - name: Ask a usage question
+    about: Report vulnerabilities privately.
+  - name: Usage question
     url: https://github.com/P4suta/terminfokit/discussions
-    about: Ask questions and discuss ideas without filing a bug.
+    about: Ask a question or discuss an idea.

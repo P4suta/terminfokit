@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 use std::env;
 use std::fmt::Write as _;
 use std::fs;
@@ -42,27 +46,27 @@ fn main() {
     for (group, type_name) in groups.iter().zip(["BooleanCap", "NumericCap", "StringCap"]) {
         writeln!(
             output,
-            "/// Fixed-index generated capability identifier.\n#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]\npub struct {type_name}(u16);"
+            "/// Generated fixed-index capability identifier.\n#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]\npub struct {type_name}(u16);"
         )
         .unwrap();
         writeln!(output, "impl {type_name} {{").unwrap();
         writeln!(
             output,
-            "    /// Number of capabilities in this fixed binary section.\n    pub const COUNT: usize = {};",
+            "    /// Number of slots in this binary section.\n    pub const COUNT: usize = {};",
             group.len()
         )
         .unwrap();
         for (index, (long, short, _, _, _)) in group.iter().enumerate() {
             writeln!(
                 output,
-                "    /// Capability {short} ({long}).\n    pub const {}: Self = Self({index});",
+                "    /// `{short}` (`{long}`).\n    pub const {}: Self = Self({index});",
                 long.to_uppercase(),
             )
             .unwrap();
         }
         writeln!(
             output,
-            "    /// Every identifier in compiled binary-slot order.\n    pub const ALL: &'static [Self] = &["
+            "    /// All identifiers in binary-slot order.\n    pub const ALL: &'static [Self] = &["
         )
         .unwrap();
         for (long, _, _, _, _) in group {

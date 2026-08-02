@@ -1,18 +1,31 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
 [package]
 name = "terminfokit-cli"
-description = "tic-, infocmp-, and tput-compatible command-line tools built on terminfokit"
+description = "Terminfo compiler, decompiler, query, and conversion commands"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-publish = false
+homepage.workspace = true
+publish = ["crates-io"]
+readme = "../../README.md"
+documentation = "https://docs.rs/terminfokit-cli"
+keywords = ["terminfo", "tic", "infocmp", "tput", "terminal"]
+categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 terminal_size = "0.4"
-terminfokit = { version = "=1.0.0-alpha.1", path = "../terminfokit" }
+terminfokit = { version = "=0.1.0", path = "../terminfokit" }
 
 [target.'cfg(unix)'.dependencies]
 nix = { version = "0.31", features = ["fs", "term"] }
+
+[package.metadata.dist]
+dist = true
+include = ["../terminfokit/LICENSE-NCURSES"]

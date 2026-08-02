@@ -1,4 +1,10 @@
-# ADR 0002: always-`alloc` core with optional `std` services
+<!--
+SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+
+SPDX-License-Identifier: MIT OR Apache-2.0
+-->
+
+# ADR 0002: Use `alloc` with optional `std`
 
 ## Status
 
@@ -6,26 +12,21 @@ Accepted (2026-08-01)
 
 ## Context
 
-terminfo is consumed in unusual places: terminal emulators, SSH tooling that
-ships entries to remote hosts, and build scripts. The core work — parsing text,
-resolving inheritance, encoding/decoding a binary format, running the parameter
-VM — is pure data transformation and needs no OS services.
+Parsing, inheritance resolution, binary encoding and decoding, and parameter
+expansion require allocation but no OS services.
 
 ## Decision
 
-`crates/terminfokit` always links `alloc` and is
-`#![cfg_attr(not(feature = "std"), no_std)]`. Its features are
-`default = ["std"]` and `std = ["dep:atomic-write-file"]`; there is no
-separately selectable `alloc` feature. The transformation modules have no
-runtime dependencies. The optional `std` feature owns filesystem databases,
-environment lookup, transport, and atomic installation. Argv and terminal I/O
-remain in `terminfokit-cli`. All workspace Rust code forbids unsafe code.
+`crates/terminfokit` always links `alloc` and uses
+`#![cfg_attr(not(feature = "std"), no_std)]`. It defines
+`default = ["std"]` and `std = ["dep:atomic-write-file"]`, with no separate
+`alloc` feature. The optional `std` feature provides filesystem databases,
+environment lookup, transport, and atomic installation. CLI I/O remains in
+`terminfokit-cli`. Workspace Rust code forbids unsafe code.
 
 ## Consequences
 
-- The API is bytes-in/bytes-out; embedding in emulators or build tools cannot
-  drag in a dependency tree.
+- The transformation API works without runtime dependencies.
 - Error types may use `alloc` collections but implement `core::error::Error`.
-- Filesystem convenience APIs are available from the same crate only when
-  `std` is enabled; no-std targets retain every pure transformation.
-- Atomic installation is the sole optional runtime dependency of the library.
+- Filesystem APIs require `std`; pure transformations do not.
+- Atomic installation is the library's only optional runtime dependency.

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
 name: CI
 
 on:
@@ -16,6 +20,26 @@ permissions:
   contents: read
 
 jobs:
+  reuse:
+    name: REUSE
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5  # v6.0.0
+
+  spelling:
+    name: Spelling
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: crate-ci/typos@bee27e3a4fd1ea2111cf90ab89cd076c870fce14  # v1.48.0
+        with:
+          config: ./_typos.toml
+
   test:
     strategy:
       fail-fast: false
@@ -67,7 +91,7 @@ jobs:
         with:
           toolchain: nightly-2026-07-15
       - run: cargo install cargo-fuzz --version 0.13.2 --locked
-      - name: Run bounded fuzz smoke suite
+      - name: Fuzz smoke
         shell: bash
         run: |
           set -euo pipefail
@@ -87,9 +111,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
         with:
           toolchain: "1.88.0"
-      - name: Fetch and verify pinned ncurses 6.6 source
+      - name: Fetch ncurses 6.6
         run: ./scripts/fetch-ncurses-oracle.sh target/oracle
-      - name: Build oracle and compare both complete trees
+      - name: Compare oracle output
         run: >-
           cargo run --locked -p terminfokit-conformance --
           target/oracle/ncurses-6.6.tar.gz
@@ -97,9 +121,11 @@ jobs:
           "$(date -u +%F)"
 
   required:
-    name: CI required
+    name: Required
     if: always()
     needs:
+      - reuse
+      - spelling
       - test
       - lint
       - fuzz-smoke
@@ -107,9 +133,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - name: Verify required jobs
+      - name: Verify jobs
         env:
           EVENT_NAME: ${{ github.event_name }}
+          REUSE_RESULT: ${{ needs.reuse.result }}
+          SPELLING_RESULT: ${{ needs.spelling.result }}
           TEST_RESULT: ${{ needs.test.result }}
           LINT_RESULT: ${{ needs.lint.result }}
           FUZZ_RESULT: ${{ needs.fuzz-smoke.result }}
@@ -117,6 +145,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test "$REUSE_RESULT" = success
+          test "$SPELLING_RESULT" = success
           test "$TEST_RESULT" = success
           test "$LINT_RESULT" = success
           test "$FUZZ_RESULT" = success

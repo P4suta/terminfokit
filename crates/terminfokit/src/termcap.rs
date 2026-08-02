@@ -1,4 +1,8 @@
-//! Termcap parsing, writing, inheritance, and conservative expression conversion.
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! Termcap parsing, writing, inheritance, and conversion.
 
 use alloc::boxed::Box;
 use alloc::format;
@@ -19,7 +23,7 @@ pub enum TermcapProfile {
     Strict,
     /// Follow ncurses 6.6 lossy conversion behavior.
     Ncurses66,
-    /// Prefer conservative historical BSD termcap compatibility.
+    /// Use historical BSD termcap compatibility.
     Bsd,
 }
 
@@ -97,7 +101,7 @@ impl ConvertOptions {
     }
 }
 
-/// One deliberate lossy termcap conversion decision.
+/// A lossy termcap conversion warning.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConversionWarning {
     capability: String,
@@ -133,7 +137,7 @@ impl TermcapConversion {
     }
 }
 
-/// Lossless termcap syntax plus its converted unresolved source document.
+/// Termcap syntax and its unresolved terminfo document.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TermcapDocument {
     original: Vec<u8>,
@@ -146,7 +150,7 @@ impl TermcapDocument {
         &self.original
     }
 
-    /// Re-emits the exact original termcap bytes.
+    /// Returns the original termcap bytes.
     pub fn to_bytes_preserve(&self) -> Vec<u8> {
         self.original.clone()
     }
@@ -202,7 +206,6 @@ fn convert_to_terminfo_source(termcap: &[u8]) -> Result<String, ParseError> {
     Ok(output)
 }
 
-/// Compile termcap source, including `tc=` inheritance.
 /// Resolves a parsed termcap document through the terminfo compiler.
 pub fn compile(
     document: &TermcapDocument,
@@ -220,7 +223,6 @@ pub fn compile(
     compiler.encode(&resolution).map_err(ConvertError::Compile)
 }
 
-/// Convert one logical entry to termcap. The default rejects every loss.
 /// Converts one resolved entry to termcap under an explicit loss profile.
 pub fn from_entry(
     entry: &Entry,
@@ -315,7 +317,7 @@ fn loss(
     } else {
         warnings.push(ConversionWarning {
             capability: name.into(),
-            message: "capability has no termcap code and was omitted".into(),
+            message: "no termcap code; omitted".into(),
         });
         Ok(())
     }
@@ -330,7 +332,7 @@ fn expression_loss(
     } else {
         warnings.push(ConversionWarning {
             capability: name.into(),
-            message: "parameter expression cannot be represented in termcap and was omitted".into(),
+            message: "parameter expression unsupported by termcap; omitted".into(),
         });
         Ok(())
     }
