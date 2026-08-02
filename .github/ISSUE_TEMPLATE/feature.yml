@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a focused API, CLI, compatibility, or tooling improvement.
+title: "feature: "
+labels:
+  - "type: enhancement"
+  - "status: needs-triage"
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What use case is difficult or impossible today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the desired API, command behavior, or workflow.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and alternatives
+      description: Note relevant ncurses behavior, public API impact, non-goals, and alternatives considered.

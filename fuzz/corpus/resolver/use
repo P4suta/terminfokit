@@ -1,0 +1,2 @@
+base,am,cols#80,
+child,clear@,use=base,

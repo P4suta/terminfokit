@@ -1,0 +1,7 @@
+version=6.6
+released=2025-12-30
+url=https://invisible-island.net/archives/ncurses/ncurses-6.6.tar.gz
+sha256=355b4cbbed880b0381a04c46617b7656e362585d52e9cf84a67e2009b749ff11
+terminfo_src_path=ncurses-6.6/misc/terminfo.src
+terminfo_src_size=1159396
+terminfo_src_sha256=75673b421c25032306f7cdf26df57978c86ed9cf3d3fb16a6479233775f4f961

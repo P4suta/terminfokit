@@ -1,0 +1,58 @@
+[package]
+name = "terminfokit-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+arbitrary = "1"
+libfuzzer-sys = "0.4"
+terminfokit = { version = "=1.0.0-alpha.1", path = "../crates/terminfokit" }
+
+[[bin]]
+name = "binary_decode"
+path = "fuzz_targets/binary_decode.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "source_parse"
+path = "fuzz_targets/source_parse.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "termcap_parse"
+path = "fuzz_targets/termcap_parse.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "resolver"
+path = "fuzz_targets/resolver.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "formatter"
+path = "fuzz_targets/formatter.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "expander"
+path = "fuzz_targets/expander.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "entry_roundtrip"
+path = "fuzz_targets/entry_roundtrip.rs"
+test = false
+doc = false
+
+[workspace]
+members = ["."]

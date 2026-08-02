@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/P4suta/terminfokit/security/advisories/new
+    about: Report suspected vulnerabilities privately.
+  - name: Ask a usage question
+    url: https://github.com/P4suta/terminfokit/discussions
+    about: Ask questions and discuss ideas without filing a bug.

@@ -1,115 +1,205 @@
-//! Typed access to terminal capabilities.
-//!
-//! Predefined capabilities are identified by their fixed index into the
-//! compiled format's boolean/numeric/string sections — the order of ncurses'
-//! capability table. Extended capabilities (`tic -x`) have no fixed index and
-//! are identified by name instead.
-//!
-//! The enums below are a *sketch*: a few representative variants with their
-//! real table indices. The full predefined tables land with M0.
+//! The generated ncurses capability vocabulary.
+use alloc::vec::Vec;
 
-/// Predefined boolean capabilities.
-///
-/// The discriminant is the capability's index into the compiled boolean
-/// section.
+/// Namespace used for an exact capability-name lookup.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
-#[repr(u16)]
-pub enum BooleanCap {
-    /// `bw` — `cub1` wraps from column 0 to the last column.
-    AutoLeftMargin = 0,
-    /// `am` — terminal has automatic margins.
-    AutoRightMargin = 1,
-    /// `xenl` — newline is ignored after 80 columns.
-    EatNewlineGlitch = 4,
-    /// `km` — terminal has a meta key.
-    HasMetaKey = 8,
+pub enum NameNamespace {
+    /// Compact terminfo source names such as cup.
+    Short,
+    /// Descriptive terminfo names such as cursor_address.
+    Long,
+    /// Historical two-character termcap codes.
+    Termcap,
 }
 
-/// Predefined numeric capabilities.
-///
-/// The discriminant is the capability's index into the compiled numeric
-/// section.
+/// Historical vocabulary generation in which a capability first appeared.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
-#[repr(u16)]
-pub enum NumericCap {
-    /// `cols` — number of columns in a line.
-    Columns = 0,
-    /// `lines` — number of lines on the screen.
-    Lines = 2,
-    /// `colors` — maximum number of colors. Values above `0x7fff` (e.g.
-    /// direct-color terminals) are exactly why the `0o1036` extended-number
-    /// format exists.
-    MaxColors = 13,
+pub enum CapabilityVersion {
+    /// Capability belongs to the System V fixed vocabulary.
+    SystemV,
 }
 
-/// Predefined string capabilities.
-///
-/// The discriminant is the capability's index into the compiled string
-/// section (a table of offsets into the string table).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[non_exhaustive]
-#[repr(u16)]
-pub enum StringCap {
-    /// `cbt` — back tab.
-    BackTab = 0,
-    /// `bel` — audible bell.
-    Bell = 1,
-    /// `cr` — carriage return.
-    CarriageReturn = 2,
-    /// `clear` — clear screen and home cursor.
-    ClearScreen = 5,
-    /// `cup` — move cursor to row `%p1`, column `%p2` (parameterized; see
-    /// [`crate::expand`]).
-    CursorAddress = 10,
+/// Names and type information associated with one fixed-index capability.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CapabilityMetadata {
+    long: &'static str,
+    short: &'static str,
+    termcap: Option<&'static str>,
+    parameters: &'static [ParameterType],
+    introduced: CapabilityVersion,
 }
 
-impl BooleanCap {
-    /// The short capability name as used in terminfo source, e.g. `"am"`.
-    pub fn short_name(self) -> &'static str {
-        todo!("full predefined boolean table (M0)")
+/// Parameter types used by `tput` and documented parameterized capabilities.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ParameterType {
+    /// Signed numeric parameter.
+    Number,
+    /// Uninterpreted byte-string parameter.
+    Bytes,
+}
+
+impl CapabilityMetadata {
+    /// Returns the compact terminfo name.
+    pub const fn short_name(&self) -> &'static str {
+        self.short
+    }
+    /// Returns the descriptive terminfo name.
+    pub const fn long_name(&self) -> &'static str {
+        self.long
+    }
+    /// Returns the termcap code when one exists.
+    pub const fn termcap_name(&self) -> Option<&'static str> {
+        self.termcap
+    }
+    /// Returns the expected parameter signature.
+    pub const fn parameters(&self) -> &'static [ParameterType] {
+        self.parameters
+    }
+    /// Returns the vocabulary generation that introduced the capability.
+    pub const fn introduced(&self) -> CapabilityVersion {
+        self.introduced
+    }
+    /// Returns the exact name in a selected namespace.
+    pub const fn name(&self, namespace: NameNamespace) -> Option<&'static str> {
+        match namespace {
+            NameNamespace::Short => Some(self.short),
+            NameNamespace::Long => Some(self.long),
+            NameNamespace::Termcap => self.termcap,
+        }
+    }
+    pub(crate) fn matches_any(&self, name: &str) -> bool {
+        self.short == name || self.long == name || self.termcap == Some(name)
     }
 }
 
-impl NumericCap {
-    /// The short capability name as used in terminfo source, e.g. `"cols"`.
-    pub fn short_name(self) -> &'static str {
-        todo!("full predefined numeric table (M0)")
+include!(concat!(env!("OUT_DIR"), "/caps_generated.rs"));
+
+/// The type of a known capability.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CapabilityKind {
+    /// Boolean flag.
+    Boolean,
+    /// Non-negative integer.
+    Number,
+    /// Binary-safe byte string.
+    String,
+}
+
+/// Type-preserving identifier for any standard capability.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum CapabilityId {
+    /// Identifier in the fixed boolean section.
+    Boolean(BooleanCap),
+    /// Identifier in the fixed numeric section.
+    Number(NumericCap),
+    /// Identifier in the fixed string section.
+    String(StringCap),
+}
+
+impl CapabilityId {
+    /// Returns the value type associated with this identifier.
+    pub const fn kind(self) -> CapabilityKind {
+        match self {
+            Self::Boolean(_) => CapabilityKind::Boolean,
+            Self::Number(_) => CapabilityKind::Number,
+            Self::String(_) => CapabilityKind::String,
+        }
+    }
+
+    /// Returns generated names and parameter metadata.
+    pub fn metadata(self) -> &'static CapabilityMetadata {
+        match self {
+            Self::Boolean(cap) => cap.metadata(),
+            Self::Number(cap) => cap.metadata(),
+            Self::String(cap) => cap.metadata(),
+        }
     }
 }
 
-impl StringCap {
-    /// The short capability name as used in terminfo source, e.g. `"cup"`.
-    pub fn short_name(self) -> &'static str {
-        todo!("full predefined string table (M0)")
-    }
-}
-
-/// The value of a capability, predefined or extended.
-#[cfg(feature = "alloc")]
+/// Result of an exact, single-namespace lookup.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Value {
-    /// A boolean capability. Absent booleans are simply missing; `false` only
-    /// occurs through cancellation semantics in some representations.
-    Boolean(bool),
-    /// A numeric capability. The legacy on-disk format stores 16-bit numbers,
-    /// the `0o1036` format 32-bit ones.
-    Number(i32),
-    /// A string capability: raw bytes, possibly containing `%` expansion
-    /// operators (see [`crate::expand`]).
-    Str(alloc::vec::Vec<u8>),
-    /// Explicitly cancelled (`cap@` in source). Serialized as `-2` in the
-    /// compiled format.
-    Cancelled,
+#[non_exhaustive]
+pub enum Lookup {
+    /// No exact name exists.
+    NotFound,
+    /// Exactly one capability has the name.
+    Found(CapabilityId),
+    /// More than one capability has the exact name.
+    Ambiguous(Vec<CapabilityId>),
 }
 
-/// The name of an extended (user-defined, `tic -x`) capability, e.g. `"Smulx"`
-/// or `"kUP5"`.
-///
-/// Extended capabilities live in the extended storage section of the compiled
-/// format and carry their names with them, unlike predefined capabilities
-/// which are identified purely by index.
-#[cfg(feature = "alloc")]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ExtendedCapName(pub alloc::string::String);
+/// Returns every exact match in one namespace, including same-type aliases.
+pub fn lookup_all(namespace: NameNamespace, name: &str) -> Vec<CapabilityId> {
+    let mut found = Vec::new();
+    found.extend(
+        BooleanCap::ALL
+            .iter()
+            .copied()
+            .filter(|cap| cap.metadata().name(namespace) == Some(name))
+            .map(CapabilityId::Boolean),
+    );
+    found.extend(
+        NumericCap::ALL
+            .iter()
+            .copied()
+            .filter(|cap| cap.metadata().name(namespace) == Some(name))
+            .map(CapabilityId::Number),
+    );
+    found.extend(
+        StringCap::ALL
+            .iter()
+            .copied()
+            .filter(|cap| cap.metadata().name(namespace) == Some(name))
+            .map(CapabilityId::String),
+    );
+    found
+}
+
+/// Look up a name in exactly one namespace.
+pub fn lookup(namespace: NameNamespace, name: &str) -> Lookup {
+    let found = lookup_all(namespace, name);
+    match found.len() {
+        0 => Lookup::NotFound,
+        1 => Lookup::Found(found[0]),
+        _ => Lookup::Ambiguous(found),
+    }
+}
+
+/// Iterate over all 497 standard capabilities in binary-slot order by type.
+pub fn all_capabilities() -> impl Iterator<Item = CapabilityId> + Clone {
+    BooleanCap::ALL
+        .iter()
+        .copied()
+        .map(CapabilityId::Boolean)
+        .chain(NumericCap::ALL.iter().copied().map(CapabilityId::Number))
+        .chain(StringCap::ALL.iter().copied().map(CapabilityId::String))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generated_table_matches_ncurses_fixed_counts() {
+        assert_eq!(BooleanCap::COUNT, 44);
+        assert_eq!(NumericCap::COUNT, 39);
+        assert_eq!(StringCap::COUNT, 414);
+        assert_eq!(
+            StringCap::CURSOR_ADDRESS.metadata().parameters(),
+            &[ParameterType::Number, ParameterType::Number]
+        );
+        assert_eq!(all_capabilities().count(), 497);
+        assert!(matches!(
+            lookup(NameNamespace::Short, "cup"),
+            Lookup::Found(CapabilityId::String(StringCap::CURSOR_ADDRESS))
+        ));
+        assert_eq!(lookup_all(NameNamespace::Termcap, "ML").len(), 2);
+        assert!(matches!(
+            lookup(NameNamespace::Termcap, "ML"),
+            Lookup::Ambiguous(candidates) if candidates.len() == 2
+        ));
+    }
+}

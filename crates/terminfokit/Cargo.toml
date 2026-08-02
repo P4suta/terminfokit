@@ -6,12 +6,19 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
+repository.workspace = true
+publish = false
+readme = "README.md"
+documentation = "https://docs.rs/terminfokit"
 keywords = ["terminfo", "tic", "infocmp", "curses", "terminal"]
 categories = ["command-line-interface", "parser-implementations", "no-std"]
 
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = ["dep:atomic-write-file"]
 
 [dependencies]
+atomic-write-file = { version = "0.3", default-features = false, optional = true }
+
+[package.metadata.docs.rs]
+all-features = true

@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        toolchain: [stable, "1.88.0"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+        with:
+          toolchain: ${{ matrix.toolchain }}
+      - run: cargo test --workspace --all-targets --all-features --locked
+      - run: cargo test --workspace --doc
+      - run: cargo check -p terminfokit --no-default-features
+      - run: cargo test -p terminfokit --doc --no-default-features
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+        with:
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown,thumbv7em-none-eabi
+      - run: cargo fmt --all -- --check
+      - run: cmp README.md crates/terminfokit/README.md
+      - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+      - run: cargo check -p terminfokit --no-default-features --target wasm32-unknown-unknown
+      - run: cargo check -p terminfokit --no-default-features --target thumbv7em-none-eabi
+      - run: cargo check --manifest-path fuzz/Cargo.toml --all-targets
+      - run: cargo package -p terminfokit --allow-dirty --locked
+      - run: cargo doc --workspace --all-features --no-deps
+        env:
+          RUSTDOCFLAGS: -D warnings
+
+  fuzz-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+        with:
+          toolchain: nightly-2026-07-15
+      - run: cargo install cargo-fuzz --version 0.13.1 --locked
+      - name: Run bounded fuzz smoke suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          for target in binary_decode source_parse termcap_parse resolver formatter expander entry_roundtrip; do
+            cargo fuzz run "$target" "fuzz/corpus/$target" -- \
+              -runs=256 -timeout=5 -rss_limit_mb=1024 \
+              -dict=fuzz/terminfo.dict
+          done
+
+  full-oracle:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+        with:
+          toolchain: "1.88.0"
+      - name: Fetch and verify pinned ncurses 6.6 source
+        run: ./scripts/fetch-ncurses-oracle.sh target/oracle
+      - name: Build oracle and compare both complete trees
+        run: >-
+          cargo run --locked -p terminfokit-conformance --
+          target/oracle/ncurses-6.6.tar.gz
+          target/full-oracle
+          "$(date -u +%F)"
+
+  required:
+    name: CI required
+    if: always()
+    needs:
+      - test
+      - lint
+      - fuzz-smoke
+      - full-oracle
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verify required jobs
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          TEST_RESULT: ${{ needs.test.result }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          FUZZ_RESULT: ${{ needs.fuzz-smoke.result }}
+          ORACLE_RESULT: ${{ needs.full-oracle.result }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$TEST_RESULT" = success
+          test "$LINT_RESULT" = success
+          test "$FUZZ_RESULT" = success
+          if test "$EVENT_NAME" = pull_request; then
+            test "$ORACLE_RESULT" = success
+          else
+            test "$ORACLE_RESULT" = skipped
+          fi

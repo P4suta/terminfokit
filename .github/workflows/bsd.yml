@@ -1,0 +1,46 @@
+name: BSD release checks
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 4 * * 1"
+
+concurrency:
+  group: bsd-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  freebsd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: vmactions/freebsd-vm@77ed28d336d03fe19a3f4f7266c1d2c4714dd79d
+        with:
+          usesh: true
+          prepare: pkg install -y rust
+          run: |
+            rustc --version
+            tic -V
+            cargo test --workspace
+            cargo check -p terminfokit --no-default-features
+
+  netbsd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: vmactions/netbsd-vm@e7ac71b97abbe8437cec8859a5acf72dfa6a8be0
+        with:
+          usesh: true
+          prepare: pkgin -y install rust ncurses
+          run: |
+            rustc --version
+            tic -V
+            cargo test --workspace
+            cargo check -p terminfokit --no-default-features
