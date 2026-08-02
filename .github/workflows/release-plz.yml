@@ -15,7 +15,9 @@ permissions:
 jobs:
   release:
     name: Release-plz release
-    if: github.repository_owner == 'P4suta'
+    if: >-
+      github.repository_owner == 'P4suta' &&
+      vars.RELEASE_PLZ_APP_CLIENT_ID != ''
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -45,7 +47,9 @@ jobs:
 
   release-pr:
     name: Release-plz PR
-    if: github.repository_owner == 'P4suta'
+    if: >-
+      github.repository_owner == 'P4suta' &&
+      vars.RELEASE_PLZ_APP_CLIENT_ID != ''
     runs-on: ubuntu-latest
     concurrency:
       group: release-plz-${{ github.ref }}
