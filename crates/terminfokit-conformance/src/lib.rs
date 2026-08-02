@@ -4,6 +4,7 @@
 #![forbid(unsafe_code)]
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::fmt::Write as _;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -219,7 +220,15 @@ fn difference_hash(
             None => digest.update(u64::MAX.to_le_bytes()),
         }
     }
-    format!("{:x}", digest.finalize())
+    lower_hex(&digest.finalize())
+}
+
+fn lower_hex(bytes: &[u8]) -> String {
+    let mut output = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        write!(&mut output, "{byte:02x}").expect("writing to a String cannot fail");
+    }
+    output
 }
 
 fn files(root: &Path) -> io::Result<BTreeMap<PathBuf, Vec<u8>>> {
@@ -407,7 +416,7 @@ pub fn run_full(config: &FullRunConfig) -> io::Result<FullRunReport> {
 }
 
 fn verify_hash(path: &Path, expected: &str, label: &str) -> io::Result<()> {
-    let actual = format!("{:x}", Sha256::digest(fs::read(path)?));
+    let actual = lower_hex(&Sha256::digest(fs::read(path)?));
     if actual.eq_ignore_ascii_case(expected) {
         Ok(())
     } else {
