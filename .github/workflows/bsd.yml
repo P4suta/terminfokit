@@ -41,6 +41,6 @@ jobs:
           prepare: /usr/sbin/pkg_add rust ncurses
           run: |
             rustc --version
-            tic -V
+            command -v tic
             cargo test --workspace
             cargo check -p terminfokit --no-default-features
