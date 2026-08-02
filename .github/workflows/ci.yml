@@ -2,7 +2,11 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
   pull_request:
+    branches:
+      - main
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -39,6 +43,7 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
         with:
+          toolchain: stable
           components: rustfmt, clippy
           targets: wasm32-unknown-unknown,thumbv7em-none-eabi
       - run: cargo fmt --all -- --check
@@ -61,7 +66,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
         with:
           toolchain: nightly-2026-07-15
-      - run: cargo install cargo-fuzz --version 0.13.1 --locked
+      - run: cargo install cargo-fuzz --version 0.13.2 --locked
       - name: Run bounded fuzz smoke suite
         shell: bash
         run: |
