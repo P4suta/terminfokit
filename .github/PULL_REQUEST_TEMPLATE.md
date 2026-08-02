@@ -10,6 +10,11 @@ Describe the result and reason.
 
 Fixes #
 
+## Pull request title
+
+Use a Conventional Commits title (`fix: ...`, `feat: ...`, or `feat!: ...`).
+The title becomes the squash merge commit that release-plz analyzes.
+
 ## Validation
 
 - [ ] Added focused tests or explained why none are needed

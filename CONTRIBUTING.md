@@ -61,6 +61,12 @@ trees, no unallowlisted differences, and byte-exact oracle decode/re-encode.
 Describe the result and reason. Test new behavior, document API and CLI changes,
 and keep `README.md` and `crates/terminfokit/README.md` identical.
 
+Use a [Conventional Commits](https://www.conventionalcommits.org/) title for
+every pull request, such as `fix: handle an empty terminal name`,
+`feat: add JSON output`, or `feat!: revise the public parser API`. The squash
+merge commit uses the pull request title, and release-plz uses that commit to
+select the next version and build the changelog.
+
 All required checks must pass before merge. See
 [RELEASING.md](RELEASING.md) for release steps.
 

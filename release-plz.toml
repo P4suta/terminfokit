@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+[workspace]
+changelog_update = false
+git_release_enable = false
+git_tag_enable = false
+publish = false
+release_always = false
+
+[[package]]
+name = "terminfokit"
+changelog_include = ["terminfokit-cli"]
+changelog_path = "./CHANGELOG.md"
+changelog_update = true
+git_tag_enable = true
+git_tag_name = "v{{ version }}"
+version_group = "terminfokit"
+
+[[package]]
+name = "terminfokit-cli"
+version_group = "terminfokit"
+
+[[package]]
+name = "terminfokit-conformance"
+release = false
+
+[changelog]
+header = """<!--
+SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+
+SPDX-License-Identifier: MIT OR Apache-2.0
+-->
+
+# Changelog
+
+This file lists notable changes. Versions follow Semantic Versioning.
+
+## Unreleased
+
+"""
+tag_pattern = "v[0-9].*"
