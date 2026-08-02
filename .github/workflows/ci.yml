@@ -121,7 +121,7 @@ jobs:
           "$(date -u +%F)"
 
   required:
-    name: Required
+    name: CI required
     if: always()
     needs:
       - reuse
