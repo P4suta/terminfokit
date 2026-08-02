@@ -1,4 +1,10 @@
-# ADR 0001: Bit-exact differential testing against ncurses `tic` as the oracle
+<!--
+SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+
+SPDX-License-Identifier: MIT OR Apache-2.0
+-->
+
+# ADR 0001: Compare output with ncurses `tic`
 
 ## Status
 
@@ -6,23 +12,20 @@ Accepted (2026-08-01)
 
 ## Context
 
-The compiled terminfo format has many under-documented corner cases (padding,
-alignment, string-table offset ordering, the extended `-x` section, cancelled
-`-2` values). A hand-written spec test suite would encode our own
-misunderstandings. Prior art proves a better bar is reachable: `ncurses-tools`
-(in `infinityabundance/ncurses-native`) achieved byte-identical output with
-ncurses 6.4's `tic` across all 2,869 terminals of the terminfo database.
+The compiled format has under-documented rules for padding, alignment,
+string-table offsets, the extended `-x` section, and cancelled `-2` values.
+Tests derived only from a written specification can repeat interpretation
+errors.
 
 ## Decision
 
-The primary correctness gate is differential: compile every entry of ncurses'
-`terminfo.src` (~2,900 entries) with both the system `tic` and terminfokit's
-`tic`, then compare outputs byte for byte. The `terminfokit-conformance` crate
-exists solely to host this harness.
+Compile the pinned ncurses `terminfo.src` with ncurses `tic` and terminfokit,
+then compare every output byte. Keep the harness in
+`terminfokit-conformance`.
 
 ## Consequences
 
-- Any byte difference is a bug by definition until triaged; triaged, deliberate
-  differences must be allowlisted with a written rationale.
-- The harness needs a system ncurses `tic` and is therefore `std`-only and
-  environment-dependent; it lives outside the core crate.
+- Treat each byte difference as a bug until triaged. Allowlist deliberate
+  differences with a reason.
+- The harness requires ncurses `tic`, `std`, and external build tools, so it
+  remains outside the core crate.

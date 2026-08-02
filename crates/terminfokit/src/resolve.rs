@@ -1,4 +1,8 @@
-//! Source compilation and ncurses-style `use=` resolution.
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! Source compilation and `use=` resolution.
 
 use alloc::collections::BTreeMap;
 use alloc::string::{String, ToString};
@@ -68,7 +72,7 @@ impl Default for CompilerOptions {
 }
 
 impl CompilerOptions {
-    /// Creates options matching normal extended-aware library compilation.
+    /// Creates default library compilation options.
     pub const fn new() -> Self {
         Self {
             extended: true,
@@ -104,8 +108,7 @@ impl CompilerOptions {
         self
     }
 
-    /// Include capabilities disabled with a leading `.` as active values.
-    /// Enabling this also enables user-defined capabilities, matching `tic -a`.
+    /// Activates dot-prefixed and user-defined capabilities.
     pub const fn with_retain_commented(mut self, value: bool) -> Self {
         self.retain_commented = value;
         if value {
@@ -127,7 +130,7 @@ impl CompilerOptions {
     }
 }
 
-/// A reusable compiler, optionally backed by an installed-entry provider.
+/// A compiler with an optional external-entry provider.
 pub struct Compiler<'a> {
     options: CompilerOptions,
     provider: Option<&'a dyn EntryProvider>,
@@ -152,7 +155,7 @@ impl<'a> Compiler<'a> {
         self.options = options;
         self
     }
-    /// Adds a provider for use targets outside the source document.
+    /// Sets a provider for external use targets.
     pub fn provider(mut self, provider: &'a dyn EntryProvider) -> Self {
         self.provider = Some(provider);
         self
@@ -391,9 +394,8 @@ impl<'a> Resolver<'a> {
             .map_err(|error| self.build_error(error, source.span))?;
         let mut entry = Entry::empty(names);
 
-        // ncurses processes uses in reverse order.  Each non-absent value then
-        // replaces one imported earlier, so the left-most conflicting use wins.
-        // Direct capabilities are applied afterwards and override every use.
+        // Reverse processing makes the leftmost conflicting use win. Direct
+        // capabilities are applied last and override inherited values.
         for capability in source.capabilities.iter().rev() {
             if capability.commented && !self.options.retain_commented {
                 continue;
@@ -559,7 +561,11 @@ impl<'a> Resolver<'a> {
         Ok(())
     }
     fn unknown_warning(&mut self, name: &str, span: crate::error::Span) {
-        self.diagnostics.push(Diagnostic::warning("TIK2005", alloc::format!("unknown capability {name:?} was omitted; enable extended capabilities to preserve it"), Some(span)));
+        self.diagnostics.push(Diagnostic::warning(
+            "TIK2005",
+            alloc::format!("unknown capability {name:?} omitted; enable extensions to keep it"),
+            Some(span),
+        ));
     }
     fn wrong_type(
         &self,
@@ -571,7 +577,7 @@ impl<'a> Resolver<'a> {
             kind: CompileErrorKind::Build(BuildError::InvalidCapabilityName(name.to_string())),
             diagnostics: vec![Diagnostic::error(
                 "TIK2006",
-                alloc::format!("capability {name:?} has the wrong type; parsed as {actual:?}"),
+                alloc::format!("capability {name:?} has type {actual:?}"),
                 Some(span),
             )],
         }
@@ -673,14 +679,14 @@ fn collect_extended_kinds(
                             Diagnostic::error(
                                 "TIK2008",
                                 alloc::format!(
-                                    "extended capability {name:?} is defined with conflicting types"
+                                    "extended capability {name:?} has conflicting types"
                                 ),
                                 Some(capability.span()),
                             )
-                            .with_primary_message(alloc::format!("defined here as {kind:?}"))
+                            .with_primary_message(alloc::format!("here: {kind:?}"))
                             .with_secondary(
                                 previous_span,
-                                alloc::format!("previously defined as {previous_kind:?}"),
+                                alloc::format!("previous: {previous_kind:?}"),
                             ),
                         ],
                     });

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 use std::fs;
 use std::io::{self, Read};
 use std::path::PathBuf;
@@ -14,49 +18,45 @@ use terminfokit::{Compiler, CompilerOptions};
 use terminfokit_cli::{DiagnosticFormat, Reporter};
 
 #[derive(Debug, Parser)]
-#[command(
-    name = "tic",
-    version,
-    about = "Compile terminfo source without a C ncurses dependency"
-)]
+#[command(name = "tic", version, about = "Compile terminfo source")]
 struct Args {
-    /// Translate resolved entries to termcap source instead of installing.
+    /// Write termcap instead of installing.
     #[arg(short = 'C')]
     termcap_output: bool,
-    /// Translate resolved entries to terminfo source using short names.
+    /// Write terminfo with short names.
     #[arg(short = 'I', conflicts_with_all = ["termcap_output", "long_source"])]
     terminfo_source: bool,
-    /// Translate resolved entries to terminfo source using long names.
+    /// Write terminfo with long names.
     #[arg(short = 'L', conflicts_with_all = ["termcap_output", "terminfo_source"])]
     long_source: bool,
-    /// Emit translated source on one line.
+    /// Write each entry on one line.
     #[arg(short = '0', conflicts_with = "one_per_line")]
     compact: bool,
-    /// Emit one capability per translated-source line.
+    /// Write one capability per line.
     #[arg(short = '1')]
     one_per_line: bool,
-    /// Width used for translated source.
+    /// Set the output width.
     #[arg(short = 'w', default_value_t = 60)]
     width: usize,
-    /// Emit compiled entries as hex (1), base64 (2), or both (3).
+    /// Write hex (1), base64 (2), or both (3).
     #[arg(short = 'Q', num_args = 0..=1, default_missing_value = "1")]
     transport: Option<u8>,
-    /// Use the conservative BSD termcap compatibility profile.
+    /// Use BSD termcap compatibility.
     #[arg(short = 'K')]
     termcap_compatibility: bool,
-    /// Do not enforce the historical termcap size limit.
+    /// Disable the termcap size limit.
     #[arg(short = 'T')]
     termcap_unlimited: bool,
-    /// Resolve inheritance before translation (resolution is always enabled).
+    /// Accept -r; resolution is always enabled.
     #[arg(short = 'r')]
     resolve: bool,
-    /// Preserve user-defined capabilities.
+    /// Keep user-defined capabilities.
     #[arg(short = 'x')]
     extended: bool,
-    /// Retain dot-prefixed commented-out capabilities (implies -x).
+    /// Enable dot-prefixed capabilities and -x.
     #[arg(short = 'a')]
     retain_commented: bool,
-    /// Compile only these comma-separated entry names (all input remains available to use=).
+    /// Select comma-separated entries; all input remains available to use=.
     #[arg(short = 'e', value_delimiter = ',')]
     entries: Vec<String>,
     /// Output database root.
@@ -65,16 +65,16 @@ struct Args {
     /// Check only; do not install entries.
     #[arg(short = 'c')]
     check: bool,
-    /// Print the effective database search roots.
+    /// Print database search roots.
     #[arg(short = 'D')]
     directories: bool,
     /// Print a compilation summary.
     #[arg(short = 's')]
     summary: bool,
-    /// Archaic terminfo subset selection is intentionally unsupported.
+    /// Unsupported terminfo subset.
     #[arg(short = 'R', value_name = "SUBSET", hide = true)]
     unsupported_subset: Option<String>,
-    /// Increase verbosity (`-vv` and ncurses-style `-v3` are accepted).
+    /// Increase verbosity; accepts `-vv` and `-v3`.
     #[arg(short = 'v', action = ArgAction::Count)]
     verbose: u8,
     #[arg(long, value_enum, default_value_t = DiagnosticFormat::Human)]
@@ -118,7 +118,7 @@ fn run(args: Args) -> Result<(), u8> {
     if args.unsupported_subset.is_some() {
         reporter.error(
             "TIKC011",
-            "-R archaic subset output is outside v1; use -I/-L source output and filter capabilities explicitly",
+            "-R is unsupported; use -I/-L and filter capabilities",
         );
         return Err(2);
     }
@@ -184,17 +184,14 @@ fn run(args: Args) -> Result<(), u8> {
     if !args.entries.is_empty() {
         for requested in &args.entries {
             if compilation.get(requested).is_none() {
-                reporter.error(
-                    "TIKC003",
-                    format!("selected entry {requested:?} does not exist"),
-                );
+                reporter.error("TIKC003", format!("selected entry {requested:?} not found"));
                 return Err(1);
             }
         }
     }
     if args.termcap_output {
         if args.resolve && args.verbose != 0 {
-            reporter.info("TIKC004", "emitting fully resolved termcap entries");
+            reporter.info("TIKC004", "writing resolved termcap entries");
         }
         for item in &selected {
             let mut options = if args.termcap_compatibility {
@@ -228,10 +225,7 @@ fn run(args: Args) -> Result<(), u8> {
     }
     if let Some(mode) = args.transport {
         if !(1..=3).contains(&mode) {
-            reporter.error(
-                "TIKC012",
-                "-Q accepts only 1 (hex), 2 (base64), or 3 (both)",
-            );
+            reporter.error("TIKC012", "-Q must be 1 (hex), 2 (base64), or 3 (both)");
             return Err(2);
         }
         if !args.check {
@@ -299,7 +293,7 @@ fn run(args: Args) -> Result<(), u8> {
             .clone()
             .or_else(default_install_root)
             .ok_or_else(|| {
-                reporter.error("TIKC007", "no output root; pass -o or set TERMINFO");
+                reporter.error("TIKC007", "output root required; use -o or TERMINFO");
                 1u8
             })?;
         let database = DirectoryDatabase::new(root);

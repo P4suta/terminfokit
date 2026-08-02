@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 use std::fs;
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -15,25 +19,25 @@ use terminfokit_cli::{DiagnosticFormat, Reporter};
 #[command(
     name = "infocmp",
     version,
-    about = "Decompile or compare compiled terminfo entries"
+    about = "Decompile or compare terminfo entries"
 )]
 struct Args {
-    /// Emit termcap instead of terminfo source.
+    /// Write termcap instead of terminfo.
     #[arg(short = 'C')]
     termcap: bool,
-    /// Use the conservative termcap compatibility profile.
+    /// Use BSD termcap compatibility.
     #[arg(short = 'K')]
     termcap_compatibility: bool,
-    /// Do not enforce the termcap size limit.
+    /// Disable the termcap size limit.
     #[arg(short = 'T')]
     termcap_unlimited: bool,
-    /// Resolve inheritance when translating (compiled entries are already resolved).
+    /// Accept -r; compiled entries are already resolved.
     #[arg(short = 'r')]
     resolve: bool,
-    /// Emit a compact single-line entry.
+    /// Write each entry on one line.
     #[arg(short = '0')]
     compact: bool,
-    /// Emit one capability per line.
+    /// Write one capability per line.
     #[arg(short = '1')]
     one_per_line: bool,
     /// Include user-defined capabilities.
@@ -51,46 +55,46 @@ struct Args {
     /// Database root for the second terminal.
     #[arg(short = 'B')]
     database_b: Option<PathBuf>,
-    /// Print the effective database search roots.
+    /// Print database search roots.
     #[arg(short = 'D')]
     directories: bool,
-    /// Compare two terminfo source files by matching entry aliases.
+    /// Compare source files by entry aliases.
     #[arg(short = 'F')]
     source_files: bool,
-    /// Emit the first entry as overrides plus use= of the second entry.
+    /// Write the first entry relative to the second.
     #[arg(short = 'u')]
     relative: bool,
-    /// Ignore padding specifications while comparing string capabilities.
+    /// Ignore string padding during comparison.
     #[arg(short = 'p')]
     ignore_padding: bool,
-    /// Emit compiled entries as hex (1), base64 (2), or both (3).
+    /// Write hex (1), base64 (2), or both (3).
     #[arg(short = 'Q', value_name = "ENCODING")]
     transport: Option<u8>,
-    /// Archaic terminfo subset selection is intentionally unsupported.
+    /// Unsupported terminfo subset.
     #[arg(short = 'R', value_name = "SUBSET", hide = true)]
     unsupported_subset: Option<String>,
-    /// C initializer generation is intentionally unsupported.
+    /// Unsupported C initializer output.
     #[arg(short = 'e', hide = true)]
     unsupported_c_initializer: bool,
-    /// Extended C initializer generation is intentionally unsupported.
+    /// Unsupported extended C initializer output.
     #[arg(short = 'E', hide = true)]
     unsupported_extended_initializer: bool,
-    /// Initialization analysis output is intentionally unsupported.
+    /// Unsupported initialization analysis.
     #[arg(short = 'i', hide = true)]
     unsupported_initialization: bool,
-    /// Show differing capabilities (the default for multiple terminals).
+    /// Show differences; default for multiple terminals.
     #[arg(short = 'd')]
     differences: bool,
-    /// Request common-capability comparison output.
+    /// Show common capabilities.
     #[arg(short = 'c')]
     common: bool,
-    /// Request absent-in-both comparison output.
+    /// Show capabilities absent from both entries.
     #[arg(short = 'n')]
     neither: bool,
     /// Suppress the comparison heading.
     #[arg(short = 'q')]
     quiet: bool,
-    /// Output wrapping width.
+    /// Set the output width.
     #[arg(short = 'w', default_value_t = 60)]
     width: usize,
     /// Sort capabilities by database (d), terminfo (i), long (l), or termcap (c) name.
@@ -119,22 +123,19 @@ fn run(mut args: Args) -> Result<(), u8> {
     if args.unsupported_subset.is_some() {
         reporter.error(
             "TIKC108",
-            "-R archaic subset output is outside v1; use -I/-L and filter capabilities explicitly",
+            "-R is unsupported; use -I/-L and filter capabilities",
         );
         return Err(2);
     }
     if args.unsupported_c_initializer || args.unsupported_extended_initializer {
         reporter.error(
             "TIKC109",
-            "C initializer output (-e/-E) is outside v1; use the terminfokit Rust API or infocmp -I",
+            "-e/-E are unsupported; use the Rust API or infocmp -I",
         );
         return Err(2);
     }
     if args.unsupported_initialization {
-        reporter.error(
-            "TIKC110",
-            "initialization analysis (-i) is outside v1; query the relevant capabilities with tput",
-        );
+        reporter.error("TIKC110", "-i is unsupported; query capabilities with tput");
         return Err(2);
     }
     if args.source_files {
@@ -152,7 +153,7 @@ fn run(mut args: Args) -> Result<(), u8> {
         match std::env::var("TERM") {
             Ok(term) if !term.is_empty() => args.terminals.push(term),
             _ => {
-                reporter.error("TIKC101", "TERM is not set and no terminal was named");
+                reporter.error("TIKC101", "terminal required; name one or set TERM");
                 return Err(2);
             }
         }
@@ -179,10 +180,7 @@ fn run(mut args: Args) -> Result<(), u8> {
     }
     if let Some(mode) = args.transport {
         if !(1..=3).contains(&mode) {
-            reporter.error(
-                "TIKC111",
-                "-Q accepts only 1 (hex), 2 (base64), or 3 (both)",
-            );
+            reporter.error("TIKC111", "-Q must be 1 (hex), 2 (base64), or 3 (both)");
             return Err(2);
         }
         for entry in &entries {
@@ -214,7 +212,7 @@ fn run(mut args: Args) -> Result<(), u8> {
         }
         if args.termcap {
             if args.resolve && !args.quiet {
-                reporter.info("TIKC104", "compiled entries are already fully resolved");
+                reporter.info("TIKC104", "entry already resolved");
             }
             let mut options = if args.termcap_compatibility {
                 terminfokit::termcap::ConvertOptions::bsd()
@@ -395,7 +393,7 @@ fn compare(left_name: &str, left: &Entry, right_name: &str, right: &Entry, args:
     };
     let diff = left.diff(right);
     if !args.quiet {
-        println!("comparing {left_name} to {right_name}.");
+        println!("{left_name} vs {right_name}");
     }
     let left_states = states(left);
     let right_states = states(right);

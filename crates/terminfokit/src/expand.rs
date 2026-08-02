@@ -1,4 +1,8 @@
-//! `tparm` parameter expansion with persistent static variables and padding events.
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! `tparm` expansion and padding events.
 
 use alloc::format;
 use alloc::vec;
@@ -64,7 +68,7 @@ impl ExpanderLimits {
         }
     }
 
-    /// Returns allocation limits bounded only by address-space size.
+    /// Returns limits bounded only by address-space size.
     pub const fn unlimited() -> Self {
         Self {
             max_output: usize::MAX,
@@ -135,13 +139,13 @@ impl Program {
         &self.bytes
     }
 
-    /// Returns conservative static program facts.
+    /// Returns static program facts.
     pub const fn analyze(&self) -> &ProgramAnalysis {
         &self.analysis
     }
 }
 
-/// Conservative static facts about a parameter program.
+/// Static facts about a parameter program.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct ProgramAnalysis {
     parameter_count: u8,
@@ -302,7 +306,7 @@ impl Expander {
         self.limits
     }
 
-    /// Reuse the caller allocation, preserving its previous bytes on failure.
+    /// Reuses caller storage and preserves it on failure.
     pub fn run_into(
         &mut self,
         program: &Program,
@@ -704,7 +708,7 @@ impl Expander {
     }
 }
 
-/// One-shot expansion. Static variables are discarded afterwards.
+/// Expands once and discards static variables.
 pub fn expand(capability: &[u8], params: &[Param<'_>]) -> Result<Vec<u8>, ExpandError> {
     let program = Program::parse(capability)?;
     let mut output = Vec::new();

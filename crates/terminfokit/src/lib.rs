@@ -1,4 +1,8 @@
-//! Pure-Rust terminfo compilation, decompilation, database access, and expansion.
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! Terminfo compilation, formatting, database access, and expansion.
 //!
 //! The transformation core is `no_std` with `alloc`; enabling the default
 //! `std` feature adds filesystem and environment-backed database access.

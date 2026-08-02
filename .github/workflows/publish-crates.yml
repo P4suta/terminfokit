@@ -1,0 +1,98 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+name: Publish crates
+
+on:
+  workflow_call:
+    inputs:
+      plan:
+        description: Dist release plan
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  publish:
+    name: Publish library and CLI
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6
+        with:
+          persist-credentials: false
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+        with:
+          toolchain: stable
+
+      - name: Check published versions
+        id: status
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(cargo metadata --no-deps --format-version=1 |
+            jq -r '.packages[] | select(.name == "terminfokit") | .version')"
+          test -n "$version"
+          test "$version" = "$(cargo metadata --no-deps --format-version=1 |
+            jq -r '.packages[] | select(.name == "terminfokit-cli") | .version')"
+
+          library_published=false
+          cli_published=false
+          if curl --fail --silent --show-error \
+            "https://crates.io/api/v1/crates/terminfokit/$version" >/dev/null; then
+            library_published=true
+          fi
+          if curl --fail --silent --show-error \
+            "https://crates.io/api/v1/crates/terminfokit-cli/$version" >/dev/null; then
+            cli_published=true
+          fi
+
+          {
+            echo "version=$version"
+            echo "library_published=$library_published"
+            echo "cli_published=$cli_published"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Request crates.io token
+        id: crates-io
+        if: >-
+          steps.status.outputs.library_published != 'true' ||
+          steps.status.outputs.cli_published != 'true'
+        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18  # v1.0.5
+
+      - name: Publish terminfokit
+        if: steps.status.outputs.library_published != 'true'
+        run: cargo publish --locked --package terminfokit
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-io.outputs.token }}
+
+      - name: Wait for crates.io index
+        if: steps.status.outputs.cli_published != 'true'
+        shell: bash
+        env:
+          VERSION: ${{ steps.status.outputs.version }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            if cargo info "terminfokit@$VERSION" --registry crates-io >/dev/null 2>&1; then
+              exit 0
+            fi
+            echo "Waiting for terminfokit $VERSION in the crates.io index ($attempt/30)"
+            sleep 10
+          done
+          echo "terminfokit $VERSION did not reach the crates.io index" >&2
+          exit 1
+
+      - name: Publish terminfokit-cli
+        if: steps.status.outputs.cli_published != 'true'
+        run: cargo publish --locked --package terminfokit-cli
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-io.outputs.token }}

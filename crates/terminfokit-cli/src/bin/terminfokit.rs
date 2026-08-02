@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 use std::process::ExitCode;
 
 #[allow(dead_code)]
@@ -59,7 +63,7 @@ fn main() -> ExitCode {
 
 fn convert(mut arguments: Vec<String>) -> ExitCode {
     if arguments.len() < 2 {
-        eprintln!("terminfokit: convert requires a conversion name");
+        eprintln!("terminfokit: conversion required");
         return ExitCode::from(2);
     }
     let conversion = arguments.remove(1);
@@ -82,6 +86,6 @@ fn convert(mut arguments: Vec<String>) -> ExitCode {
 fn usage() {
     println!(
         "Usage: terminfokit <COMMAND> [OPTIONS]\n\n\
-Commands:\n  compile   Compile terminfo source (alias: tic)\n  inspect   Inspect or compare entries (alias: infocmp)\n  query     Query capabilities (alias: tput)\n  convert   Convert termcap/terminfo source\n  doctor    Diagnose lookup and the selected entry"
+Commands:\n  compile   Compile terminfo (alias: tic)\n  inspect   Inspect entries (alias: infocmp)\n  query     Query capabilities (alias: tput)\n  convert   Convert termcap or terminfo\n  doctor    Inspect lookup"
     );
 }

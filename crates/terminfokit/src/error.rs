@@ -1,11 +1,15 @@
-//! Processing-specific errors and machine-readable diagnostics.
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! Errors and machine-readable diagnostics.
 
 use alloc::boxed::Box;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::fmt;
 
-/// Stable identity assigned to one source buffer.
+/// Stable source-buffer identifier.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct SourceId(u32);
 
@@ -29,7 +33,7 @@ pub struct TextRange {
 }
 
 impl TextRange {
-    /// Creates a half-open range without changing its bounds.
+    /// Creates a half-open range.
     pub const fn new(start: usize, end: usize) -> Self {
         Self { start, end }
     }
@@ -55,7 +59,7 @@ impl TextRange {
     }
 }
 
-/// A range paired with the identity of its source.
+/// A source identifier and byte range.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct Span {
     source_id: SourceId,
@@ -97,13 +101,13 @@ impl Span {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Severity {
-    /// Processing can continue, but output may be lossy or surprising.
+    /// Processing continues, but output may be lossy.
     Warning,
     /// Processing cannot produce the requested result.
     Error,
 }
 
-/// One primary or secondary source label.
+/// A primary or secondary source label.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DiagnosticLabel {
     span: Span,
@@ -215,7 +219,7 @@ impl Diagnostic {
     }
 }
 
-/// Structural reason that compiled terminfo decoding failed.
+/// Compiled-format decode failure.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum DecodeErrorKind {
@@ -241,7 +245,7 @@ pub enum DecodeErrorKind {
     TrailingData,
 }
 
-/// Offset-aware compiled terminfo decode failure.
+/// Compiled-format failure and byte offset.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DecodeError {
     offset: usize,
@@ -274,7 +278,7 @@ impl fmt::Display for DecodeError {
     }
 }
 
-/// Failure while serializing a logical entry.
+/// Logical-entry serialization failure.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum EncodeError {
@@ -304,7 +308,7 @@ impl fmt::Display for EncodeError {
     }
 }
 
-/// Failure while constructing or editing a logical entry.
+/// Logical-entry construction or edit failure.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum BuildError {
@@ -330,7 +334,7 @@ impl fmt::Display for BuildError {
     }
 }
 
-/// Source parsing failure with a structured diagnostic.
+/// Source parse failure and diagnostic.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseError {
     pub(crate) diagnostic: Box<Diagnostic>,
@@ -395,7 +399,7 @@ pub enum CompileErrorKind {
     Encode(EncodeError),
 }
 
-/// Compilation failure plus all structured diagnostics.
+/// Compilation failure and diagnostics.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompileError {
     pub(crate) kind: CompileErrorKind,
@@ -429,7 +433,7 @@ impl fmt::Display for CompileError {
     }
 }
 
-/// Parameter-program validation or execution failure.
+/// Parameter-program failure.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ExpandErrorKind {
@@ -457,7 +461,7 @@ pub enum ExpandErrorKind {
     StackLimit,
 }
 
-/// Byte-offset-aware parameter expansion failure.
+/// Expansion failure and byte offset.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ExpandError {
     pub(crate) offset: usize,
@@ -480,7 +484,7 @@ impl ExpandError {
     }
 }
 
-/// Failure while converting between terminfo and termcap models.
+/// Terminfo/termcap conversion failure.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ConvertError {
@@ -528,7 +532,7 @@ impl fmt::Display for ExpandError {
     }
 }
 
-/// Filesystem, environment, transport, or decode database failure.
+/// Database access or decode failure.
 #[cfg(feature = "std")]
 #[derive(Debug)]
 #[non_exhaustive]

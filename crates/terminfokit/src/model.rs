@@ -1,4 +1,8 @@
-//! Editable logical terminfo entries.
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! Logical terminfo entries.
 
 use alloc::string::{String, ToString};
 use alloc::vec;
@@ -170,11 +174,10 @@ pub enum CapabilityValueRef<'a> {
     String(CapabilityState<&'a [u8]>),
 }
 
-/// Primary name, lookup aliases, and the optional final verbose name.
+/// Primary name, aliases, and optional verbose name.
 ///
-/// Ncurses treats a final names-field without whitespace as both an alias and
-/// the verbose name. The source_fields method emits that shared value only
-/// once, so decoding and re-encoding does not duplicate it.
+/// Ncurses treats a final field without whitespace as both an alias and the
+/// verbose name; `source_fields` emits that shared field once.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EntryNames {
     primary: String,
@@ -224,7 +227,7 @@ impl EntryNames {
         self.verbose_name.as_deref()
     }
 
-    /// Compatibility synonym for verbose_name.
+    /// Alias for `verbose_name`.
     pub fn description(&self) -> Option<&str> {
         self.verbose_name()
     }
@@ -263,7 +266,7 @@ impl EntryNames {
         Ok(())
     }
 
-    /// Compatibility synonym for set_verbose_name.
+    /// Alias for `set_verbose_name`.
     pub fn set_description(&mut self, description: Option<String>) -> Result<(), BuildError> {
         self.set_verbose_name(description)
     }
@@ -554,7 +557,6 @@ fn set_slot<T: Clone + Default>(slots: &mut Vec<T>, index: usize, value: T) {
     slots[index] = value;
 }
 
-/// Fluent checked construction of an [`Entry`].
 /// Fluent checked builder for a logical entry.
 pub struct EntryBuilder {
     entry: Entry,

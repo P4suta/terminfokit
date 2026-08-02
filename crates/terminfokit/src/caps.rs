@@ -1,7 +1,11 @@
-//! The generated ncurses capability vocabulary.
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! Generated terminfo capability metadata.
 use alloc::vec::Vec;
 
-/// Namespace used for an exact capability-name lookup.
+/// Capability-name namespace.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum NameNamespace {
@@ -13,15 +17,15 @@ pub enum NameNamespace {
     Termcap,
 }
 
-/// Historical vocabulary generation in which a capability first appeared.
+/// Capability vocabulary version.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum CapabilityVersion {
-    /// Capability belongs to the System V fixed vocabulary.
+    /// System V fixed vocabulary.
     SystemV,
 }
 
-/// Names and type information associated with one fixed-index capability.
+/// Metadata for one fixed-index capability.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CapabilityMetadata {
     long: &'static str,
@@ -31,7 +35,7 @@ pub struct CapabilityMetadata {
     introduced: CapabilityVersion,
 }
 
-/// Parameter types used by `tput` and documented parameterized capabilities.
+/// Parameter type for `tput`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParameterType {
     /// Signed numeric parameter.
@@ -57,7 +61,7 @@ impl CapabilityMetadata {
     pub const fn parameters(&self) -> &'static [ParameterType] {
         self.parameters
     }
-    /// Returns the vocabulary generation that introduced the capability.
+    /// Returns the capability's vocabulary version.
     pub const fn introduced(&self) -> CapabilityVersion {
         self.introduced
     }
@@ -87,7 +91,7 @@ pub enum CapabilityKind {
     String,
 }
 
-/// Type-preserving identifier for any standard capability.
+/// Typed standard-capability identifier.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum CapabilityId {
@@ -119,7 +123,7 @@ impl CapabilityId {
     }
 }
 
-/// Result of an exact, single-namespace lookup.
+/// Exact lookup result for one namespace.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Lookup {
@@ -158,7 +162,7 @@ pub fn lookup_all(namespace: NameNamespace, name: &str) -> Vec<CapabilityId> {
     found
 }
 
-/// Look up a name in exactly one namespace.
+/// Looks up a name in exactly one namespace.
 pub fn lookup(namespace: NameNamespace, name: &str) -> Lookup {
     let found = lookup_all(namespace, name);
     match found.len() {
@@ -168,7 +172,7 @@ pub fn lookup(namespace: NameNamespace, name: &str) -> Lookup {
     }
 }
 
-/// Iterate over all 497 standard capabilities in binary-slot order by type.
+/// Iterates over all 497 standard capabilities in binary-slot order.
 pub fn all_capabilities() -> impl Iterator<Item = CapabilityId> + Clone {
     BooleanCap::ALL
         .iter()

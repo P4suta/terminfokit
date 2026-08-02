@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 #![forbid(unsafe_code)]
 
 use clap::{Parser, ValueEnum};
@@ -17,19 +21,16 @@ pub struct Reporter {
 }
 
 #[derive(Debug, Parser)]
-#[command(
-    name = "terminfokit doctor",
-    about = "Diagnose terminfo lookup without side effects"
-)]
+#[command(name = "terminfokit doctor", about = "Inspect terminfo lookup")]
 struct DoctorArgs {
-    /// Override the terminal name.
+    /// Set the terminal name.
     #[arg(short = 'T')]
     terminal: Option<String>,
     #[arg(long, value_enum, default_value_t = DiagnosticFormat::Human)]
     diagnostic_format: DiagnosticFormat,
 }
 
-/// Runs the side-effect-free database diagnostic command.
+/// Runs database diagnostics.
 pub fn doctor_from(arguments: Vec<String>) -> std::process::ExitCode {
     use terminfokit::caps::{BooleanCap, NumericCap, StringCap};
     use terminfokit::database::{
@@ -46,7 +47,7 @@ pub fn doctor_from(arguments: Vec<String>) -> std::process::ExitCode {
     {
         Some(terminal) => terminal,
         None => {
-            reporter.error("TIKC501", "no terminal name; pass -T or set TERM");
+            reporter.error("TIKC501", "terminal required; use -T or TERM");
             return std::process::ExitCode::from(2);
         }
     };

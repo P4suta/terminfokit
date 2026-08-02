@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 use std::fs;
 #[cfg(unix)]
 use std::io::IsTerminal;
@@ -18,22 +22,22 @@ use terminfokit_cli::{DiagnosticFormat, Reporter};
 #[command(
     name = "tput",
     version,
-    about = "Query and expand capabilities from the terminfo database"
+    about = "Query or expand terminfo capabilities"
 )]
 struct Args {
-    /// Override the terminal name.
+    /// Set the terminal name.
     #[arg(short = 'T')]
     terminal: Option<String>,
-    /// Read one invocation per line from standard input.
+    /// Read one command per input line.
     #[arg(short = 'S')]
     batch: bool,
-    /// Do not clear the scrollback buffer after clear.
+    /// Keep scrollback after clear.
     #[arg(short = 'x')]
     no_clear_scrollback: bool,
-    /// Do not run the iprog capability during explicit init/reset.
+    /// Skip iprog during init and reset.
     #[arg(long)]
     no_init_program: bool,
-    /// Increase diagnostic verbosity.
+    /// Increase verbosity.
     #[arg(short = 'v', action = ArgAction::Count)]
     verbose: u8,
     /// Capability and its parameters.
@@ -55,7 +59,7 @@ pub fn main_from(arguments: Vec<String>) -> ExitCode {
 fn run(args: Args) -> u8 {
     let reporter = Reporter::new("tput", args.diagnostic_format);
     if !args.batch && args.operands.is_empty() {
-        reporter.error("TIKC206", "a capability operand is required");
+        reporter.error("TIKC206", "capability required");
         return 2;
     }
     let explicit_terminal = args.terminal.is_some();
@@ -66,7 +70,7 @@ fn run(args: Args) -> u8 {
     {
         Some(value) => value,
         None => {
-            reporter.error("TIKC201", "no terminal name; pass -T or set TERM");
+            reporter.error("TIKC201", "terminal required; use -T or TERM");
             return 2;
         }
     };
@@ -115,7 +119,7 @@ fn run(args: Args) -> u8 {
             } else {
                 reporter.error(
                     "TIKC205",
-                    "batch lines contain one capability and its parameters",
+                    "each batch line needs one capability and its parameters",
                 );
                 4
             };
@@ -371,20 +375,16 @@ fn initialize_with_backend(
             }
         };
         if !status.success() {
-            reporter.error(
-                "TIKC216",
-                format!("initialization program exited with {status}"),
-            );
+            reporter.error("TIKC216", format!("init program exited with {status}"));
             return 4;
         }
     }
 
     match terminal_mode.configure(entry, reset) {
         Ok(true) => {}
-        Ok(false) if verbose => reporter.warning(
-            "TIKC217",
-            "terminal mode updates are unavailable on this platform",
-        ),
+        Ok(false) if verbose => {
+            reporter.warning("TIKC217", "terminal mode unavailable on this platform")
+        }
         Ok(false) => {}
         Err(error) => {
             reporter.error("TIKC218", error.to_string());
@@ -683,7 +683,7 @@ fn emit(
                 Err(_) => {
                     reporter.error(
                         "TIKC209",
-                        format!("parameter {} must be numeric", index + 1),
+                        format!("parameter {} must be a number", index + 1),
                     );
                     return 4;
                 }

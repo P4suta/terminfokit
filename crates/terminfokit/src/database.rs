@@ -1,4 +1,8 @@
-//! Filesystem databases, ncurses search paths, and portable single-entry transport.
+// SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+//
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! Filesystem databases, search paths, and inline transport.
 
 use std::env;
 use std::fs;
@@ -95,7 +99,7 @@ pub enum AliasMethod {
     AtomicCopy,
 }
 
-/// One installed alias and its resulting path.
+/// An installed alias and path.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AliasInstall {
     name: String,
@@ -145,7 +149,7 @@ impl InstallReport {
     }
 }
 
-/// A decoded entry together with its exact load provenance.
+/// A decoded entry and its load origin.
 #[derive(Debug, Clone)]
 pub struct LoadReport {
     entry: Entry,
@@ -153,7 +157,7 @@ pub struct LoadReport {
     origin: LoadOrigin,
 }
 
-/// Provenance of a database load.
+/// Database load origin.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum LoadOrigin {
@@ -209,7 +213,7 @@ impl LoadReport {
     }
 }
 
-/// Common read-only interface implemented by database backends.
+/// Read-only database backend.
 pub trait DatabaseBackend {
     /// Loads a named entry and includes backend provenance.
     fn load_report(&self, name: &str) -> Result<LoadReport, DatabaseError>;
@@ -385,7 +389,7 @@ impl EntryProvider for DirectoryDatabase {
     }
 }
 
-/// Ordered, duplicate-free set of terminfo directory roots.
+/// Ordered unique terminfo roots.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SearchPath {
     roots: Vec<PathBuf>,
@@ -469,13 +473,12 @@ impl EntryProvider for SearchPath {
     }
 }
 
-/// Load an entry using `TERMINFO=hex:...` / `b64:...` or the ncurses directory search path.
+/// Loads an entry from inline `TERMINFO` or the directory search path.
 pub fn load_from_env(name: &str) -> Result<Entry, DatabaseError> {
     load_from_env_report(name).map(LoadReport::into_entry)
 }
 
-/// Loads an entry using the environment and reports its exact transport or
-/// directory origin.
+/// Loads from the environment and reports the selected origin.
 pub fn load_from_env_report(name: &str) -> Result<LoadReport, DatabaseError> {
     if let Ok(value) = env::var("TERMINFO") {
         if let Some(encoded) = value.strip_prefix("hex:") {
@@ -524,8 +527,7 @@ pub fn encode_transport(
     encode_transport_with(entry, encoding, EncodeOptions::new())
 }
 
-/// Encodes one entry as a prefixed inline transport value with explicit
-/// compiled-output options.
+/// Encodes an entry for inline transport with explicit output options.
 pub fn encode_transport_with(
     entry: &Entry,
     encoding: TransportEncoding,

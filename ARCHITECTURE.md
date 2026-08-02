@@ -1,8 +1,14 @@
+<!--
+SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+
+SPDX-License-Identifier: MIT OR Apache-2.0
+-->
+
 # Architecture
 
-The public hub is a logical `Entry` with private storage. Fixed boolean,
-numeric, and string capabilities use generated typed identifiers; every value
-is `Absent`, `Cancelled`, or `Value(T)`. Terminal strings are raw bytes.
+`Entry` is the public logical model. Generated identifiers address fixed
+boolean, numeric, and string capabilities. Values are `Absent`, `Cancelled`,
+or `Value(T)`. Terminal strings remain raw bytes.
 
 ```text
 terminfo source ── parse ──► unresolved SourceEntry graph
@@ -18,17 +24,15 @@ termcap source ── convert ──────► Entry ── binary::encode 
                                   └──────► termcap writer
 ```
 
-The library always has `alloc` available. With default features disabled every
-transformation above remains available without runtime dependencies. The `std`
-feature adds `DirectoryDatabase`, `SearchPath`, environment lookup, portable
-transport, and atomic installation through `atomic_write_file`. CLI
-dependencies remain confined to `terminfokit-cli`.
+The library always uses `alloc`. Disabling default features preserves all data
+transformations without runtime dependencies. The `std` feature adds
+`DirectoryDatabase`, `SearchPath`, environment lookup, portable transport, and
+atomic installation through `atomic_write_file`. CLI dependencies remain in
+`terminfokit-cli`.
 
-Capability metadata is declared once in `crates/terminfokit/capabilities.tsv`.
-The dependency-free build script generates the three private-index typed
-newtypes, associated constants, metadata, and lookup tables, keeping binary
-indices, short/long names, termcap codes, parameter signatures, and capability
-versions aligned.
+`crates/terminfokit/capabilities.tsv` defines capability metadata. The
+dependency-free build script generates typed identifiers, constants, metadata,
+and lookup tables from it.
 
-All workspace crates forbid publishing until the offline tests, pinned ncurses
-full-oracle suite, target OS matrix, documentation, and package audit pass.
+The private conformance crate compares output with pinned ncurses. CI also runs
+offline tests, target and OS checks, documentation checks, and package audits.
