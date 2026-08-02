@@ -15,4 +15,4 @@ terminal_size = "0.4"
 terminfokit = { version = "=1.0.0-alpha.1", path = "../terminfokit" }
 
 [target.'cfg(unix)'.dependencies]
-nix = { version = "0.30", features = ["fs", "term"] }
+nix = { version = "0.31", features = ["fs", "term"] }
