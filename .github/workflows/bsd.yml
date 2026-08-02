@@ -38,9 +38,9 @@ jobs:
       - uses: vmactions/netbsd-vm@e7ac71b97abbe8437cec8859a5acf72dfa6a8be0
         with:
           usesh: true
-          prepare: pkgin -y install rust ncurses
+          prepare: /usr/sbin/pkg_add rust ncurses
           run: |
             rustc --version
-            tic -V
+            command -v tic
             cargo test --workspace
             cargo check -p terminfokit --no-default-features
