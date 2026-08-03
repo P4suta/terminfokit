@@ -77,9 +77,58 @@ jobs:
       - run: cargo check -p terminfokit --no-default-features --target thumbv7em-none-eabi
       - run: cargo check --manifest-path fuzz/Cargo.toml --all-targets
       - run: cargo package -p terminfokit --allow-dirty --locked
+      # Only the library was packaged here before, so nothing checked the CLI --
+      # which sets `readme = "../../README.md"`, a path outside its own package
+      # root, and publishes second in an order-dependent chain. It cannot be
+      # packaged alone until the library is on crates.io, so package the
+      # publishable members together and let Cargo resolve the sibling.
+      - run: >-
+          cargo package --workspace --exclude terminfokit-conformance
+          --allow-dirty --locked --no-verify
       - run: cargo doc --workspace --all-features --no-deps
         env:
           RUSTDOCFLAGS: -D warnings
+
+  supply-chain:
+    name: Supply chain
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+        with:
+          toolchain: stable
+      # cargo-deny is installed as a tool rather than run through
+      # EmbarkStudios/cargo-deny-action, which is not on this repository's
+      # Actions allowlist. Keeping the allowlist unchanged is deliberate.
+      - uses: taiki-e/install-action@43aecc8d72668fbcfe75c31400bc4f890f1c5853  # v2.83.2
+        with:
+          tool: cargo-deny@0.20.2
+      - run: cargo deny --all-features --locked check
+
+  release-workflow:
+    name: Release workflow drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install dist
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 -LsSf \
+            https://github.com/axodotdev/cargo-dist/releases/download/v0.32.0/cargo-dist-installer.sh |
+            sh
+      # `dist` owns .github/workflows/v-release.yml and regenerates it from
+      # [workspace.metadata.dist] in Cargo.toml. Anything that edits the
+      # generated file directly -- a Dependabot action bump, most often --
+      # desynchronizes the two, and until now the only thing that noticed was
+      # `dist plan` inside the release itself. Checking here turns a broken
+      # release into a failed pull request.
+      - name: Check generated release workflow is current
+        run: dist generate --check
 
   fuzz-smoke:
     runs-on: ubuntu-latest
@@ -128,6 +177,8 @@ jobs:
       - spelling
       - test
       - lint
+      - supply-chain
+      - release-workflow
       - fuzz-smoke
       - full-oracle
     runs-on: ubuntu-latest
@@ -140,6 +191,8 @@ jobs:
           SPELLING_RESULT: ${{ needs.spelling.result }}
           TEST_RESULT: ${{ needs.test.result }}
           LINT_RESULT: ${{ needs.lint.result }}
+          SUPPLY_CHAIN_RESULT: ${{ needs.supply-chain.result }}
+          RELEASE_WORKFLOW_RESULT: ${{ needs.release-workflow.result }}
           FUZZ_RESULT: ${{ needs.fuzz-smoke.result }}
           ORACLE_RESULT: ${{ needs.full-oracle.result }}
         shell: bash
@@ -149,6 +202,8 @@ jobs:
           test "$SPELLING_RESULT" = success
           test "$TEST_RESULT" = success
           test "$LINT_RESULT" = success
+          test "$SUPPLY_CHAIN_RESULT" = success
+          test "$RELEASE_WORKFLOW_RESULT" = success
           test "$FUZZ_RESULT" = success
           if test "$EVENT_NAME" = pull_request; then
             test "$ORACLE_RESULT" = success
