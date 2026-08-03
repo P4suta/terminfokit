@@ -96,9 +96,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25  # v2.1.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
         with:
-          command: --all-features --locked check
+          toolchain: stable
+      # cargo-deny is installed as a tool rather than run through
+      # EmbarkStudios/cargo-deny-action, which is not on this repository's
+      # Actions allowlist. Keeping the allowlist unchanged is deliberate.
+      - uses: taiki-e/install-action@43aecc8d72668fbcfe75c31400bc4f890f1c5853  # v2.83.2
+        with:
+          tool: cargo-deny@0.20.2
+      - run: cargo deny --all-features --locked check
 
   release-workflow:
     name: Release workflow drift
