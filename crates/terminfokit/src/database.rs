@@ -559,6 +559,11 @@ pub fn default_install_root() -> Option<PathBuf> {
 
 fn default_roots() -> Vec<PathBuf> {
     if cfg!(windows) {
+        // Windows ships no system terminfo database and has no conventional
+        // location for one, so there is nothing to search by default. Inventing
+        // a path here would be this crate's own convention rather than a
+        // platform one. Callers point `TERMINFO` or `TERMINFO_DIRS` at a
+        // directory they control; the README documents this.
         Vec::new()
     } else {
         [

@@ -57,6 +57,12 @@ pub fn doctor_from(arguments: Vec<String>) -> std::process::ExitCode {
     for (index, root) in search.roots().iter().enumerate() {
         println!("search[{index}]={}", root.display());
     }
+    if search.roots().is_empty() {
+        // Windows has no system terminfo database, so an unset TERMINFO leaves
+        // nothing to search and every lookup fails. Say so here rather than
+        // letting the user read a bare NotFound and assume the entry is broken.
+        println!("search=<none>; set TERMINFO or TERMINFO_DIRS to a directory you control");
+    }
     let report = match load_from_env_report(&terminal) {
         Ok(report) => report,
         Err(error) => {

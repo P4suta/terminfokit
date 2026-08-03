@@ -17,7 +17,7 @@ use terminfokit_cli::{DiagnosticFormat, Reporter};
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "infocmp",
+    name = "tik-infocmp",
     version,
     about = "Decompile or compare terminfo entries"
 )]
@@ -119,7 +119,7 @@ pub fn main_from(arguments: Vec<String>) -> ExitCode {
 }
 
 fn run(mut args: Args) -> Result<(), u8> {
-    let reporter = Reporter::new("infocmp", args.diagnostic_format);
+    let reporter = Reporter::new("tik-infocmp", args.diagnostic_format);
     if args.unsupported_subset.is_some() {
         reporter.error(
             "TIKC108",

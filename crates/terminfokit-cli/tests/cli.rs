@@ -23,7 +23,7 @@ fn run_with_stdin(program: &str, args: &[&str], input: &[u8]) -> Output {
 }
 
 fn transport(source: &[u8]) -> String {
-    let output = run_with_stdin(env!("CARGO_BIN_EXE_tic"), &["-x", "-Q1", "-"], source);
+    let output = run_with_stdin(env!("CARGO_BIN_EXE_tik-tic"), &["-x", "-Q1", "-"], source);
     assert!(
         output.status.success(),
         "{}",
@@ -34,7 +34,7 @@ fn transport(source: &[u8]) -> String {
 
 #[test]
 fn unsupported_operations_are_usage_errors_before_external_lookup() {
-    let output = Command::new(env!("CARGO_BIN_EXE_tput"))
+    let output = Command::new(env!("CARGO_BIN_EXE_tik-tput"))
         .arg("init")
         .env_remove("TERM")
         .output()
@@ -42,7 +42,7 @@ fn unsupported_operations_are_usage_errors_before_external_lookup() {
     assert_eq!(output.status.code(), Some(2));
     assert!(String::from_utf8_lossy(&output.stderr).contains("terminal required"));
 
-    let output = Command::new(env!("CARGO_BIN_EXE_infocmp"))
+    let output = Command::new(env!("CARGO_BIN_EXE_tik-infocmp"))
         .arg("-e")
         .env_remove("TERM")
         .output()
@@ -54,7 +54,7 @@ fn unsupported_operations_are_usage_errors_before_external_lookup() {
 #[test]
 fn integrated_commands_use_the_compatibility_implementations() {
     let source = b"demo|demo terminal,am,cols#80,clear=ok,\n";
-    let compatibility = run_with_stdin(env!("CARGO_BIN_EXE_tic"), &["-c", "-"], source);
+    let compatibility = run_with_stdin(env!("CARGO_BIN_EXE_tik-tic"), &["-c", "-"], source);
     let integrated = run_with_stdin(
         env!("CARGO_BIN_EXE_terminfokit"),
         &["compile", "-c", "-"],
@@ -64,7 +64,7 @@ fn integrated_commands_use_the_compatibility_implementations() {
     assert_eq!(integrated.stdout, compatibility.stdout);
     assert_eq!(integrated.stderr, compatibility.stderr);
 
-    let compatibility = run_with_stdin(env!("CARGO_BIN_EXE_captoinfo"), &["-"], b"d:am:\n");
+    let compatibility = run_with_stdin(env!("CARGO_BIN_EXE_tik-captoinfo"), &["-"], b"d:am:\n");
     let integrated = run_with_stdin(
         env!("CARGO_BIN_EXE_terminfokit"),
         &["convert", "termcap-to-terminfo", "-"],
@@ -79,7 +79,7 @@ fn integrated_commands_use_the_compatibility_implementations() {
 fn tput_matches_numeric_extended_and_clear_x_rules() {
     let encoded = transport(b"demo|demo terminal,clear=base,E3=scroll,xnum#7,\n");
     let command = |args: &[&str]| {
-        Command::new(env!("CARGO_BIN_EXE_tput"))
+        Command::new(env!("CARGO_BIN_EXE_tik-tput"))
             .args(args)
             .env("TERM", "demo")
             .env("TERMINFO", &encoded)
@@ -107,7 +107,7 @@ fn tput_matches_numeric_extended_and_clear_x_rules() {
     assert_eq!(output.status.code(), Some(1));
     assert_eq!(output.stdout, b"-1\n7\n");
 
-    let mut child = Command::new(env!("CARGO_BIN_EXE_tput"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_tik-tput"))
         .arg("-S")
         .env("TERM", "demo")
         .env("TERMINFO", &encoded)
@@ -153,7 +153,7 @@ fn doctor_reports_inline_origin_and_statuses_without_mutation() {
 
 #[test]
 fn ndjson_diagnostics_are_one_structured_record_per_line() {
-    let output = Command::new(env!("CARGO_BIN_EXE_tic"))
+    let output = Command::new(env!("CARGO_BIN_EXE_tik-tic"))
         .args(["--diagnostic-format", "ndjson", "-R", "SVr2"])
         .output()
         .expect("run tic");
@@ -169,7 +169,7 @@ fn ndjson_diagnostics_are_one_structured_record_per_line() {
 #[test]
 fn translation_frontends_share_binary_safe_parsers() {
     let output = run_with_stdin(
-        env!("CARGO_BIN_EXE_captoinfo"),
+        env!("CARGO_BIN_EXE_tik-captoinfo"),
         &["-"],
         b"# non-utf8: \xff\ndemo|demo terminal:am:co#80:cl=\\E[H\\E[2J:\n",
     );
@@ -181,7 +181,7 @@ fn translation_frontends_share_binary_safe_parsers() {
     assert!(output.stdout.windows(8).any(|value| value == b"cols#80,"));
 
     let output = run_with_stdin(
-        env!("CARGO_BIN_EXE_infotocap"),
+        env!("CARGO_BIN_EXE_tik-infotocap"),
         &["-"],
         b"# non-utf8: \xff\ndemo|demo terminal,am,cols#80,clear=\\E[H,\n",
     );
@@ -196,7 +196,7 @@ fn translation_frontends_share_binary_safe_parsers() {
 #[test]
 fn tic_check_accepts_non_utf8_comments_without_installing() {
     let output = run_with_stdin(
-        env!("CARGO_BIN_EXE_tic"),
+        env!("CARGO_BIN_EXE_tik-tic"),
         &["-c", "-"],
         b"# arbitrary byte: \xff\ndemo,am,cols#80,\n",
     );
@@ -218,7 +218,7 @@ fn infocmp_source_file_mode_matches_aliases_and_reports_unmatched_entries() {
     std::fs::write(&left, b"a|shared,cols#80,\nleft-only,am,\n").unwrap();
     std::fs::write(&right, b"shared|b,cols#81,\nright-only,am,\n").unwrap();
 
-    let output = Command::new(env!("CARGO_BIN_EXE_infocmp"))
+    let output = Command::new(env!("CARGO_BIN_EXE_tik-infocmp"))
         .arg("-F")
         .arg(&left)
         .arg(&right)

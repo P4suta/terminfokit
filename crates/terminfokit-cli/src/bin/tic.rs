@@ -18,7 +18,7 @@ use terminfokit::{Compiler, CompilerOptions};
 use terminfokit_cli::{DiagnosticFormat, Reporter};
 
 #[derive(Debug, Parser)]
-#[command(name = "tic", version, about = "Compile terminfo source")]
+#[command(name = "tik-tic", version, about = "Compile terminfo source")]
 struct Args {
     /// Write termcap instead of installing.
     #[arg(short = 'C')]
@@ -114,7 +114,7 @@ fn normalized_args(arguments: Vec<String>) -> Vec<String> {
 }
 
 fn run(args: Args) -> Result<(), u8> {
-    let reporter = Reporter::new("tic", args.diagnostic_format);
+    let reporter = Reporter::new("tik-tic", args.diagnostic_format);
     if args.unsupported_subset.is_some() {
         reporter.error(
             "TIKC011",
