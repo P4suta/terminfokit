@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# terminfokit is portable, so the graph is checked for the platforms CI builds
+# rather than a single host triple.
+[graph]
+all-features = true
+targets = [
+  "aarch64-apple-darwin",
+  "x86_64-apple-darwin",
+  "x86_64-pc-windows-msvc",
+  "x86_64-unknown-linux-gnu",
+]
+
+[advisories]
+version = 2
+ignore = []
+unmaintained = "all"
+unsound = "all"
+unused-ignored-advisory = "deny"
+yanked = "deny"
+
+[licenses]
+version = 2
+# X11 covers capabilities.tsv, which is derived from ncurses and ships with the
+# library under LICENSE-NCURSES. BSD-3-Clause covers atomic-write-file, the
+# only dependency that is not dual MIT/Apache.
+allow = ["Apache-2.0", "BSD-3-Clause", "MIT", "Unicode-3.0", "X11"]
+confidence-threshold = 1.0
+exceptions = []
+include-build = true
+include-dev = true
+unused-allowed-license = "deny"
+
+[licenses.private]
+ignore = false
+
+[bans]
+highlight = "all"
+multiple-versions = "deny"
+multiple-versions-include-dev = true
+skip = [
+  { crate = "nix@0.30.1", reason = "atomic-write-file 0.3 still pins nix 0.30 while terminfokit-cli uses nix 0.31; both are Unix-only and this collapses when atomic-write-file bumps" },
+]
+skip-tree = []
+wildcards = "deny"
+
+[sources]
+allow-git = []
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+required-git-spec = "rev"
+unknown-git = "deny"
+unknown-registry = "deny"
+unused-allowed-source = "deny"
