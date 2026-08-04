@@ -13,25 +13,26 @@ creates attestations and the immutable GitHub Release, and publishes both crates
 through crates.io trusted publishing.
 
 release-plz never publishes crates or creates a GitHub Release. Do not give its
-workflow a crates.io token or an OpenID Connect permission.
+workflow a crates.io token or an OpenID Connect permission. Publication always
+happens in `publish-crates.yml`, whether it authenticates through trusted
+publishing or, for a crate's first release, through a bootstrap token.
 
 ## Bootstrap release 0.1.0
 
-The first crates.io publication cannot use trusted publishing. Before enabling
-the release-plz workflow, release the already reviewed `0.1.0` commit manually:
+A trusted publisher can only be registered against a crate that already exists,
+so the first publication of each crate needs a token. It still goes through the
+normal workflow rather than a local `cargo publish`:
 
-1. From that exact commit, run all checks in [CONTRIBUTING.md](CONTRIBUTING.md),
-   package both public crates, and inspect their contents.
-2. Publish `terminfokit`, wait until it is available from the crates.io index,
-   and then publish `terminfokit-cli`. Do not reverse this order.
-3. Create and push `v0.1.0` on the same commit. Approve the `release`
-   environment deployment and let cargo-dist complete the immutable GitHub
-   Release.
-4. Verify both crates, all release assets, CycloneDX JSON SBOMs, checksums,
-   auditable dependency metadata, and artifact attestations.
-5. Only after the manual publication succeeds, register trusted publishers for
-   both crates using this repository, the `release` environment, and
-   `.github/workflows/publish-crates.yml`.
+1. Add `CARGO_REGISTRY_TOKEN` to the `release` environment. `publish-crates.yml`
+   uses it in place of the OpenID Connect exchange whenever it is present, and
+   says so in the job log.
+2. Release `0.1.0` through the normal flow below. The publish job is idempotent:
+   it queries crates.io for each version first, publishes `terminfokit`, waits
+   for the index, and only then publishes `terminfokit-cli`.
+3. Register trusted publishers for both crates using this repository, the
+   `release` environment, and `.github/workflows/publish-crates.yml`.
+4. Delete the `CARGO_REGISTRY_TOKEN` secret. From then on every release uses the
+   short-lived OpenID Connect exchange and no long-lived credential exists.
 
 ## One-time repository setup
 
@@ -53,7 +54,7 @@ the release-plz workflow, release the already reviewed `0.1.0` commit manually:
    repository ruleset. Do not restrict tag creation, so the shared App does not
    need an Administration permission or ruleset bypass.
 8. Complete the `0.1.0` bootstrap above, then configure both crates.io trusted
-   publishers. Remove any long-lived CI publishing token.
+   publishers and delete the bootstrap token.
 
 ## Each release
 
