@@ -20,7 +20,7 @@ use terminfokit_cli::{DiagnosticFormat, Reporter};
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "tput",
+    name = "tik-tput",
     version,
     about = "Query or expand terminfo capabilities"
 )]
@@ -57,7 +57,7 @@ pub fn main_from(arguments: Vec<String>) -> ExitCode {
 }
 
 fn run(args: Args) -> u8 {
-    let reporter = Reporter::new("tput", args.diagnostic_format);
+    let reporter = Reporter::new("tik-tput", args.diagnostic_format);
     if !args.batch && args.operands.is_empty() {
         reporter.error("TIKC206", "capability required");
         return 2;

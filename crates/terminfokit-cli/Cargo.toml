@@ -17,6 +17,40 @@ readme = "../../README.md"
 documentation = "https://docs.rs/terminfokit-cli"
 keywords = ["terminfo", "tic", "infocmp", "tput", "terminal"]
 categories = ["command-line-utilities", "development-tools"]
+# Every binary is declared below, so target auto-discovery must stay off. With
+# it on, `src/bin/tput.rs` would also be inferred as a binary named `tput` and
+# installed into a directory that rustup puts ahead of the system path, which
+# would replace the ncurses tools for the user's whole shell.
+autobins = false
+
+[[bin]]
+name = "terminfokit"
+path = "src/bin/terminfokit.rs"
+
+# The ncurses names are prefixed rather than reused. `cargo install` and the
+# shell installer both write into `~/.cargo/bin`, so a binary named `tput` or
+# `tic` there shadows the system implementation for every shell script, prompt,
+# and curses program the user runs. Prefixing keeps installation reversible and
+# leaves the system tools in place.
+[[bin]]
+name = "tik-tic"
+path = "src/bin/tic.rs"
+
+[[bin]]
+name = "tik-infocmp"
+path = "src/bin/infocmp.rs"
+
+[[bin]]
+name = "tik-tput"
+path = "src/bin/tput.rs"
+
+[[bin]]
+name = "tik-captoinfo"
+path = "src/bin/captoinfo.rs"
+
+[[bin]]
+name = "tik-infotocap"
+path = "src/bin/infotocap.rs"
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }

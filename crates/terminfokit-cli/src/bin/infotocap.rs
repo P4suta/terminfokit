@@ -13,7 +13,7 @@ use terminfokit::termcap::{ConvertOptions, from_entry};
 use terminfokit_cli::{DiagnosticFormat, Reporter};
 
 #[derive(Debug, Parser)]
-#[command(name = "infotocap", version, about = "Convert terminfo to termcap")]
+#[command(name = "tik-infotocap", version, about = "Convert terminfo to termcap")]
 struct Args {
     /// Use ncurses lossy conversion.
     #[arg(short = 'K')]
@@ -36,7 +36,7 @@ fn main() -> ExitCode {
 
 pub fn main_from(arguments: Vec<String>) -> ExitCode {
     let args = Args::parse_from(arguments);
-    let reporter = Reporter::new("infotocap", args.diagnostic_format);
+    let reporter = Reporter::new("tik-infotocap", args.diagnostic_format);
     if args.files.is_empty()
         && io::stdin().is_terminal()
         && let Ok(term) = std::env::var("TERM")

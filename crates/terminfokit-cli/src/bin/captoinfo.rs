@@ -14,7 +14,7 @@ use terminfokit::format::{FormatOptions, Layout, SourceFormatter};
 use terminfokit_cli::{DiagnosticFormat, Reporter};
 
 #[derive(Debug, Parser)]
-#[command(name = "captoinfo", version, about = "Convert termcap to terminfo")]
+#[command(name = "tik-captoinfo", version, about = "Convert termcap to terminfo")]
 struct Args {
     #[arg(short = 'v', action = ArgAction::Count)]
     verbose: u8,
@@ -37,7 +37,7 @@ fn main() -> ExitCode {
 
 pub fn main_from(arguments: Vec<String>) -> ExitCode {
     let args = Args::parse_from(arguments);
-    let reporter = Reporter::new("captoinfo", args.diagnostic_format);
+    let reporter = Reporter::new("tik-captoinfo", args.diagnostic_format);
     let mut sources = Vec::new();
     if args.files.is_empty() && io::stdin().is_terminal() {
         if let Ok(termcap) = std::env::var("TERMCAP")

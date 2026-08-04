@@ -268,11 +268,28 @@ impl DecodeError {
     }
 }
 
+impl fmt::Display for DecodeErrorKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Truncated => f.write_str("input ended before the section was complete"),
+            Self::BadMagic(magic) => write!(f, "unsupported header magic {magic:#06o}"),
+            Self::NegativeSize => f.write_str("a section count was negative"),
+            Self::SizeLimit => f.write_str("a section exceeded a format or defensive size limit"),
+            Self::InvalidBoolean(value) => write!(f, "unknown boolean sentinel {value}"),
+            Self::InvalidSentinel(value) => write!(f, "invalid numeric or string sentinel {value}"),
+            Self::InvalidStringOffset => f.write_str("a string offset points outside its table"),
+            Self::UnterminatedString => f.write_str("a string table item has no terminating NUL"),
+            Self::InvalidName => f.write_str("a terminal or capability name is invalid"),
+            Self::TrailingData => f.write_str("bytes remain after the final recognized section"),
+        }
+    }
+}
+
 impl fmt::Display for DecodeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "invalid compiled terminfo at byte {}: {:?}",
+            "invalid compiled terminfo at byte {}: {}",
             self.offset, self.kind
         )
     }
@@ -330,7 +347,22 @@ pub enum BuildError {
 
 impl fmt::Display for BuildError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "invalid terminfo entry: {self:?}")
+        match self {
+            Self::EmptyPrimaryName => f.write_str("a terminal entry needs a primary name"),
+            Self::InvalidName(name) => write!(f, "invalid terminal name {name:?}"),
+            Self::DuplicateAlias(name) => write!(f, "duplicate terminal name {name:?}"),
+            Self::InvalidCapabilityName(name) => write!(f, "invalid capability name {name:?}"),
+            Self::InvalidNumber(value) => {
+                write!(f, "{value} is not a valid terminfo numeric value")
+            }
+            Self::StringContainsNul(name) => {
+                write!(f, "capability {name:?} contains a NUL byte")
+            }
+            Self::ExtendedKindRequired(name) => write!(
+                f,
+                "cancelling the unknown extension {name:?} requires its capability type"
+            ),
+        }
     }
 }
 
@@ -426,9 +458,18 @@ impl CompileError {
 impl fmt::Display for CompileError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.kind {
+            CompileErrorKind::Parse => f.write_str("terminfo source could not be parsed"),
             CompileErrorKind::MissingUse { name } => write!(f, "unknown use= entry {name:?}"),
             CompileErrorKind::UseCycle { chain } => write!(f, "use= cycle: {}", chain.join(" -> ")),
-            other => write!(f, "terminfo compilation failed: {other:?}"),
+            CompileErrorKind::ExtendedTypeConflict { name } => write!(
+                f,
+                "user-defined capability {name:?} is used with conflicting types"
+            ),
+            CompileErrorKind::Provider { name, message } => {
+                write!(f, "entry provider failed for {name:?}: {message}")
+            }
+            CompileErrorKind::Build(error) => write!(f, "invalid terminfo entry: {error}"),
+            CompileErrorKind::Encode(error) => write!(f, "encoding failed: {error}"),
         }
     }
 }
@@ -522,11 +563,31 @@ impl fmt::Display for ConvertError {
     }
 }
 
+impl fmt::Display for ExpandErrorKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::TruncatedOperator => f.write_str("an operator is missing required bytes"),
+            Self::StackUnderflow => f.write_str("an operator needed more stack values"),
+            Self::TypeMismatch => f.write_str("a value had the wrong number or string type"),
+            Self::InvalidParameter => f.write_str("parameter index is out of range"),
+            Self::InvalidVariable => f.write_str("variable name is out of range"),
+            Self::InvalidNumber => {
+                f.write_str("a numeric literal or formatting operand is invalid")
+            }
+            Self::DivideByZero => f.write_str("division or remainder by zero"),
+            Self::UnbalancedConditional => f.write_str("conditional markers are unbalanced"),
+            Self::OutputLimit => f.write_str("expanded output exceeds the configured limit"),
+            Self::StepLimit => f.write_str("executed operators exceed the configured limit"),
+            Self::StackLimit => f.write_str("stack depth exceeds the configured limit"),
+        }
+    }
+}
+
 impl fmt::Display for ExpandError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "parameter expansion failed at byte {}: {:?}",
+            "parameter expansion failed at byte {}: {}",
             self.offset, self.kind
         )
     }
