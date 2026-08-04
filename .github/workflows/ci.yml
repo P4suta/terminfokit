@@ -160,6 +160,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
         with:
           toolchain: "1.88.0"
+      # Keyed on the pinned digests, so the cache can only ever hold the exact
+      # archive the lock file names. The fetch script verifies it again.
+      - name: Cache the ncurses 6.6 archive
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: target/oracle/ncurses-6.6.tar.gz
+          key: ncurses-oracle-${{ hashFiles('oracle/ncurses-6.6.lock') }}
       - name: Fetch ncurses 6.6
         run: ./scripts/fetch-ncurses-oracle.sh target/oracle
       - name: Compare oracle output
