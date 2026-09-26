@@ -700,14 +700,14 @@ fn encode_hex(bytes: &[u8]) -> String {
     output
 }
 fn decode_hex(value: &str) -> Result<Vec<u8>, DatabaseError> {
-    if !value.len().is_multiple_of(2) {
+    let (pairs, remainder) = value.as_bytes().as_chunks::<2>();
+    if !remainder.is_empty() {
         return Err(DatabaseError::UnsupportedBackend(
             "odd-length hex transport".into(),
         ));
     }
-    value
-        .as_bytes()
-        .chunks_exact(2)
+    pairs
+        .iter()
         .map(|pair| {
             let high = hex_digit(pair[0])
                 .ok_or_else(|| DatabaseError::UnsupportedBackend("invalid hex transport".into()))?;
@@ -749,15 +749,15 @@ fn encode_base64(bytes: &[u8]) -> String {
     output
 }
 fn decode_base64(value: &str) -> Result<Vec<u8>, DatabaseError> {
-    if !value.len().is_multiple_of(4) {
+    let (quartets, remainder) = value.as_bytes().as_chunks::<4>();
+    if !remainder.is_empty() {
         return Err(DatabaseError::UnsupportedBackend(
             "invalid base64 transport length".into(),
         ));
     }
-    let mut output = Vec::with_capacity(value.len() / 4 * 3);
-    let chunks = value.len() / 4;
-    for (index, chunk) in value.as_bytes().chunks_exact(4).enumerate() {
-        let final_chunk = index + 1 == chunks;
+    let mut output = Vec::with_capacity(quartets.len() * 3);
+    for (index, chunk) in quartets.iter().enumerate() {
+        let final_chunk = index + 1 == quartets.len();
         let a = b64_digit(chunk[0])?;
         let b = b64_digit(chunk[1])?;
         let c = if chunk[2] == b'=' {
