@@ -10,6 +10,12 @@ This file lists notable changes. Versions follow Semantic Versioning.
 
 ## Unreleased
 
+
+## [0.1.1](https://github.com/P4suta/terminfokit/compare/v0.1.0...v0.1.1) - 2026-09-26
+
+### Fixed
+
+- support Rust 1.98 clippy ([#25](https://github.com/P4suta/terminfokit/pull/25))
 ## 0.1.0 - 2026-08-03
 
 Initial release of the `terminfokit` library and six command-line binaries.

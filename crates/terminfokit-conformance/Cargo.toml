@@ -14,5 +14,5 @@ authors.workspace = true
 repository.workspace = true
 
 [dependencies]
-terminfokit = { version = "=0.1.0", path = "../terminfokit" }
+terminfokit = { version = "=0.1.1", path = "../terminfokit" }
 sha2 = "0.11"
