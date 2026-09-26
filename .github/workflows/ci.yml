@@ -85,7 +85,16 @@ jobs:
       - run: >-
           cargo package --workspace --exclude terminfokit-conformance
           --allow-dirty --locked --no-verify
-      - run: cargo doc --workspace --all-features --no-deps
+      # The public library and the primary CLI binary intentionally share the user-facing name `terminfokit`.
+      # Generate their documentation into separate target directories because Cargo otherwise races on the same output path.
+      - run: >-
+          cargo doc -p terminfokit -p terminfokit-conformance
+          --all-features --no-deps --locked
+        env:
+          RUSTDOCFLAGS: -D warnings
+      - run: >-
+          cargo doc -p terminfokit-cli --all-features --no-deps --locked
+          --target-dir target/cli-doc
         env:
           RUSTDOCFLAGS: -D warnings
 
@@ -217,3 +226,21 @@ jobs:
           else
             test "$ORACLE_RESULT" = skipped
           fi
+
+  # The one status check branch protection requires,
+  # named the same in every P4suta repository.
+  # It passes only when every job it needs succeeded or was skipped.
+  required-check:
+    name: required
+    if: always()
+    needs: [required]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Fail unless every needed job succeeded or was skipped
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          echo "${RESULTS}"
+          jq -e 'all(.[]; IN("success", "skipped"))' <<< "${RESULTS}"
