@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-      - uses: crate-ci/typos@bee27e3a4fd1ea2111cf90ab89cd076c870fce14  # v1.48.0
+      - uses: crate-ci/typos@7f9d0819ca1c008ade73f4b41fa9d258d48f605b  # v1.51.1
         with:
           config: ./_typos.toml
 
@@ -111,7 +111,7 @@ jobs:
       # cargo-deny is installed as a tool rather than run through
       # EmbarkStudios/cargo-deny-action, which is not on this repository's
       # Actions allowlist. Keeping the allowlist unchanged is deliberate.
-      - uses: taiki-e/install-action@43aecc8d72668fbcfe75c31400bc4f890f1c5853  # v2.83.2
+      - uses: taiki-e/install-action@f7e5d7c961414b23f5b25b2da9294395d08513ad  # v2.87.26
         with:
           tool: cargo-deny@0.20.2
       - run: cargo deny --all-features --locked check
@@ -147,7 +147,7 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
         with:
-          toolchain: nightly-2026-07-15
+          toolchain: nightly-2026-10-07
       - run: cargo install cargo-fuzz --version 0.13.2 --locked
       - name: Fuzz smoke
         shell: bash
@@ -168,7 +168,7 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
         with:
-          toolchain: "1.88.0"
+          toolchain: "1.99.0"
       # Keyed on the pinned digests, so the cache can only ever hold the exact
       # archive the lock file names. The fetch script verifies it again.
       - name: Cache the ncurses 6.6 archive
