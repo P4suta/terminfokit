@@ -348,14 +348,14 @@ dependencies = [
 
 [[package]]
 name = "terminfokit"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "atomic-write-file",
 ]
 
 [[package]]
 name = "terminfokit-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "nix",
@@ -365,7 +365,7 @@ dependencies = [
 
 [[package]]
 name = "terminfokit-conformance"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "sha2",
  "terminfokit",
