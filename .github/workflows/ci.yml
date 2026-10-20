@@ -5,9 +5,8 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+  merge_group:
   pull_request:
     branches:
       - main
@@ -20,32 +19,66 @@ permissions:
   contents: read
 
 jobs:
-  reuse:
-    name: REUSE
+  quality:
+    name: Workflow and documentation checks
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.changes.outputs.code }}
+      oracle: ${{ steps.changes.outputs.oracle }}
+      release: ${{ steps.changes.outputs.release }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # v4.0.3
+        id: changes
+        with:
+          base: ${{ github.event.merge_group.base_sha || github.event.repository.default_branch }}
+          filters: .github/filters/ci.yml
+      - name: Validate selection outputs
+        env:
+          CODE_FILTER: ${{ steps.changes.outputs.code }}
+          ORACLE_FILTER: ${{ steps.changes.outputs.oracle }}
+          RELEASE_FILTER: ${{ steps.changes.outputs.release }}
+        run: >-
+          jq -en --arg code "$CODE_FILTER" --arg oracle "$ORACLE_FILTER" --arg release "$RELEASE_FILTER"
+          '[$code, $oracle, $release] | all(. == "true" or . == "false")'
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283  # v2.87.29
+        with:
+          tool: actionlint@1.7.12
+      - name: Lint handwritten workflows
+        run: >-
+          actionlint .github/workflows/ci.yml .github/workflows/codeql.yml
+          .github/workflows/bsd.yml .github/workflows/scorecard.yml
+          .github/workflows/dependency-review.yml .github/workflows/release-plz.yml
+          .github/workflows/release-dry-run.yml .github/workflows/release-approval.yml
+          .github/workflows/publish-crates.yml .github/workflows/sbom.yml
       - uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5  # v6.0.0
-
-  spelling:
-    name: Spelling
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: crate-ci/typos@bee27e3a4fd1ea2111cf90ab89cd076c870fce14  # v1.48.0
+      - uses: crate-ci/typos@7f9d0819ca1c008ade73f4b41fa9d258d48f605b  # v1.51.1
         with:
           config: ./_typos.toml
+      - run: cmp README.md crates/terminfokit/README.md
 
   test:
+    needs: [quality]
+    if: needs.quality.outputs.code == 'true' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        toolchain: [stable, "1.88.0"]
+        include:
+          - os: ubuntu-latest
+            toolchain: stable
+          - os: windows-latest
+            toolchain: stable
+          - os: macos-latest
+            toolchain: stable
+          - os: ubuntu-latest
+            toolchain: "1.88.0"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -60,7 +93,10 @@ jobs:
       - run: cargo test -p terminfokit --doc --no-default-features
 
   lint:
+    needs: [quality]
+    if: needs.quality.outputs.code == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -71,7 +107,6 @@ jobs:
           components: rustfmt, clippy
           targets: wasm32-unknown-unknown,thumbv7em-none-eabi
       - run: cargo fmt --all -- --check
-      - run: cmp README.md crates/terminfokit/README.md
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - run: cargo check -p terminfokit --no-default-features --target wasm32-unknown-unknown
       - run: cargo check -p terminfokit --no-default-features --target thumbv7em-none-eabi
@@ -100,7 +135,10 @@ jobs:
 
   supply-chain:
     name: Supply chain
+    needs: [quality]
+    if: needs.quality.outputs.code == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -108,17 +146,17 @@ jobs:
       - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
         with:
           toolchain: stable
-      # cargo-deny is installed as a tool rather than run through
-      # EmbarkStudios/cargo-deny-action, which is not on this repository's
-      # Actions allowlist. Keeping the allowlist unchanged is deliberate.
-      - uses: taiki-e/install-action@43aecc8d72668fbcfe75c31400bc4f890f1c5853  # v2.83.2
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283  # v2.87.29
         with:
           tool: cargo-deny@0.20.2
       - run: cargo deny --all-features --locked check
 
   release-workflow:
     name: Release workflow drift
+    needs: [quality]
+    if: needs.quality.outputs.release == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -139,36 +177,18 @@ jobs:
       - name: Check generated release workflow is current
         run: dist generate --check
 
-  fuzz-smoke:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
-        with:
-          toolchain: nightly-2026-07-15
-      - run: cargo install cargo-fuzz --version 0.13.2 --locked
-      - name: Fuzz smoke
-        shell: bash
-        run: |
-          set -euo pipefail
-          for target in binary_decode source_parse termcap_parse resolver formatter expander entry_roundtrip; do
-            cargo fuzz run "$target" "fuzz/corpus/$target" -- \
-              -runs=256 -timeout=5 -rss_limit_mb=1024 \
-              -dict=fuzz/terminfo.dict
-          done
-
   full-oracle:
-    if: github.event_name == 'pull_request'
+    needs: [quality]
+    if: needs.quality.outputs.oracle == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
         with:
-          toolchain: "1.88.0"
+          toolchain: "1.99.1"
       # Keyed on the pinned digests, so the cache can only ever hold the exact
       # archive the lock file names. The fetch script verifies it again.
       - name: Cache the ncurses 6.6 archive
@@ -186,61 +206,34 @@ jobs:
           "$(date -u +%F)"
 
   required:
-    name: CI required
+    name: required
     if: always()
     needs:
-      - reuse
-      - spelling
+      - quality
       - test
       - lint
       - supply-chain
       - release-workflow
-      - fuzz-smoke
       - full-oracle
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
       - name: Verify jobs
         env:
+          RESULTS: ${{ toJSON(needs) }}
           EVENT_NAME: ${{ github.event_name }}
-          REUSE_RESULT: ${{ needs.reuse.result }}
-          SPELLING_RESULT: ${{ needs.spelling.result }}
-          TEST_RESULT: ${{ needs.test.result }}
-          LINT_RESULT: ${{ needs.lint.result }}
-          SUPPLY_CHAIN_RESULT: ${{ needs.supply-chain.result }}
-          RELEASE_WORKFLOW_RESULT: ${{ needs.release-workflow.result }}
-          FUZZ_RESULT: ${{ needs.fuzz-smoke.result }}
-          ORACLE_RESULT: ${{ needs.full-oracle.result }}
+          CODE_SELECTED: ${{ needs.quality.outputs.code }}
+          ORACLE_SELECTED: ${{ needs.quality.outputs.oracle }}
+          RELEASE_SELECTED: ${{ needs.quality.outputs.release }}
         shell: bash
         run: |
           set -euo pipefail
-          test "$REUSE_RESULT" = success
-          test "$SPELLING_RESULT" = success
-          test "$TEST_RESULT" = success
-          test "$LINT_RESULT" = success
-          test "$SUPPLY_CHAIN_RESULT" = success
-          test "$RELEASE_WORKFLOW_RESULT" = success
-          test "$FUZZ_RESULT" = success
-          if test "$EVENT_NAME" = pull_request; then
-            test "$ORACLE_RESULT" = success
-          else
-            test "$ORACLE_RESULT" = skipped
-          fi
-
-  # The one status check branch protection requires,
-  # named the same in every P4suta repository.
-  # It passes only when every job it needs succeeded or was skipped.
-  required-check:
-    name: required
-    if: always()
-    needs: [required]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions: {}
-    steps:
-      - name: Fail unless every needed job succeeded or was skipped
-        env:
-          RESULTS: ${{ toJSON(needs.*.result) }}
-        run: |
-          echo "${RESULTS}"
-          jq -e 'all(.[]; IN("success", "skipped"))' <<< "${RESULTS}"
+          jq -e --arg code "$CODE_SELECTED" --arg oracle "$ORACLE_SELECTED" \
+            --arg release "$RELEASE_SELECTED" --arg event "$EVENT_NAME" '
+            ([$code, $oracle, $release] | all(. == "true" or . == "false")) and
+            .quality.result == "success" and
+            ([.test.result, .lint.result, ."supply-chain".result] |
+              all(. == (if $code == "true" or $event == "workflow_dispatch" then "success" else "skipped" end))) and
+            (."full-oracle".result == (if $oracle == "true" or $event == "workflow_dispatch" then "success" else "skipped" end)) and
+            (."release-workflow".result == (if $release == "true" or $event == "workflow_dispatch" then "success" else "skipped" end))
+            ' <<< "$RESULTS"

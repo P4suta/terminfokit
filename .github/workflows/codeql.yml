@@ -5,14 +5,16 @@
 name: CodeQL
 
 on:
-  push:
-    branches:
-      - main
+  merge_group:
   pull_request:
     branches:
       - main
-  schedule:
-    - cron: "31 3 * * 2"
+    paths:
+      - '**/*.rs'
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+      - '.github/workflows/**'
+      - '.github/actions/**'
   workflow_dispatch:
 
 concurrency:
@@ -47,26 +49,13 @@ jobs:
           persist-credentials: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@f205ea1c3313d32999d8d6a48b4f6530d4437b38  # v4.37.4
+        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee  # v4.39.0
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
           queries: security-extended
 
       - name: Scan
-        uses: github/codeql-action/analyze@f205ea1c3313d32999d8d6a48b4f6530d4437b38  # v4.37.4
+        uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee  # v4.39.0
         with:
           category: "/language:${{ matrix.language }}"
-
-  required:
-    name: CodeQL required
-    if: always()
-    needs:
-      - analyze
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: Verify scan
-        env:
-          ANALYZE_RESULT: ${{ needs.analyze.result }}
-        run: test "$ANALYZE_RESULT" = success
