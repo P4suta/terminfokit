@@ -18,6 +18,9 @@ use terminfokit::expand::{Expander, OutputEvent, PaddingContext, Param, Program}
 use terminfokit::{BooleanState, CapabilityState, Entry, ExtendedValue};
 use terminfokit_cli::{DiagnosticFormat, Reporter};
 
+#[cfg(unix)]
+const CONTROLLING_TERMINAL_PATH: &str = "/dev/tty";
+
 #[derive(Debug, Parser)]
 #[command(
     name = "tik-tput",
@@ -656,7 +659,10 @@ fn configure_terminal_mode(entry: &Entry, reset: bool) -> io::Result<bool> {
         update(&stdin, entry, reset)?;
         return Ok(true);
     }
-    let tty = OpenOptions::new().read(true).write(true).open("/dev/tty")?;
+    let tty = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(CONTROLLING_TERMINAL_PATH)?;
     update(&tty, entry, reset)?;
     Ok(true)
 }
