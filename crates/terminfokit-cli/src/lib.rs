@@ -7,6 +7,9 @@
 use clap::{Parser, ValueEnum};
 use terminfokit::error::{Diagnostic, DiagnosticLabel, Severity};
 
+const DOCTOR_USAGE_ERROR_EXIT_STATUS: u8 = 2;
+const DOCTOR_LOOKUP_ERROR_EXIT_STATUS: u8 = 3;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum DiagnosticFormat {
     Human,
@@ -48,7 +51,7 @@ pub fn doctor_from(arguments: Vec<String>) -> std::process::ExitCode {
         Some(terminal) => terminal,
         None => {
             reporter.error("TIKC501", "terminal required; use -T or TERM");
-            return std::process::ExitCode::from(2);
+            return std::process::ExitCode::from(DOCTOR_USAGE_ERROR_EXIT_STATUS);
         }
     };
 
@@ -67,7 +70,7 @@ pub fn doctor_from(arguments: Vec<String>) -> std::process::ExitCode {
         Ok(report) => report,
         Err(error) => {
             reporter.error("TIKC502", error.to_string());
-            return std::process::ExitCode::from(3);
+            return std::process::ExitCode::from(DOCTOR_LOOKUP_ERROR_EXIT_STATUS);
         }
     };
     match report.origin() {

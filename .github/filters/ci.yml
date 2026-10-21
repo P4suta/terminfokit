@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: 2026 Yasunobu Sakashita
+#
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+code:
+  - 'crates/**'
+  - 'Cargo.toml'
+  - 'Cargo.lock'
+  - 'fuzz/**'
+  - '.github/workflows/ci.yml'
+  - '.github/filters/ci.yml'
+
+oracle:
+  - 'crates/terminfokit/src/**'
+  - 'crates/terminfokit/build.rs'
+  - 'crates/terminfokit/capabilities.tsv'
+  - 'crates/terminfokit/Cargo.toml'
+  - 'crates/terminfokit-conformance/**'
+  - 'Cargo.toml'
+  - 'Cargo.lock'
+  - 'oracle/**'
+  - 'scripts/fetch-ncurses-oracle.sh'
+  - '.github/workflows/ci.yml'
+  - '.github/filters/ci.yml'
+
+release:
+  - 'Cargo.toml'
+  - 'Cargo.lock'
+  - 'crates/**/Cargo.toml'
+  - 'README.md'
+  - 'crates/terminfokit/README.md'
+  - 'LICENSE*'
+  - 'crates/**/LICENSE*'
+  - 'release-plz.toml'
+  - '.github/workflows/v-release.yml'
+  - '.github/workflows/release-*.yml'
+  - '.github/workflows/publish-crates.yml'
+  - '.github/workflows/sbom.yml'
+  - '.github/workflows/ci.yml'
+  - '.github/filters/ci.yml'
