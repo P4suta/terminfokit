@@ -5,9 +5,9 @@
 [workspace]
 resolver = "3"
 members = [
-    "crates/terminfokit",
-    "crates/terminfokit-cli",
-    "crates/terminfokit-conformance",
+  "crates/terminfokit",
+  "crates/terminfokit-cli",
+  "crates/terminfokit-conformance",
 ]
 
 [workspace.package]
@@ -25,10 +25,10 @@ ci = ["github"]
 hosting = ["github"]
 packages = ["terminfokit-cli"]
 targets = [
-    "x86_64-unknown-linux-gnu",
-    "x86_64-pc-windows-msvc",
-    "x86_64-apple-darwin",
-    "aarch64-apple-darwin",
+  "x86_64-unknown-linux-gnu",
+  "x86_64-pc-windows-msvc",
+  "x86_64-apple-darwin",
+  "aarch64-apple-darwin",
 ]
 installers = ["shell", "powershell"]
 unix-archive = ".tar.gz"
@@ -44,6 +44,9 @@ github-attestations-filters = ["*"]
 github-release = "host"
 global-artifacts-jobs = ["./sbom", "./release-approval"]
 publish-jobs = ["./publish-crates"]
+
+[workspace.metadata.dist.github-custom-runners]
+global = "ubuntu-26.04"
 
 [workspace.metadata.dist.github-custom-job-permissions.publish-crates]
 contents = "read"
