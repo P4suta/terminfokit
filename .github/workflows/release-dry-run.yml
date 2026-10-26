@@ -13,7 +13,7 @@ permissions:
 jobs:
   plan:
     name: Plan release
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
     outputs:
       val: ${{ steps.plan.outputs.manifest }}
     steps:
@@ -129,7 +129,7 @@ jobs:
     needs:
       - plan
       - build-local-artifacts
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
     env:
       BUILD_MANIFEST_NAME: target/distrib/global-dist-manifest.json
     steps:
@@ -188,7 +188,7 @@ jobs:
     needs:
       - build-global-artifacts
       - sbom
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Download assets
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
