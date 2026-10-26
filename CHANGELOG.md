@@ -10,6 +10,17 @@ This file lists notable changes. Versions follow Semantic Versioning.
 
 ## Unreleased
 
+
+## [0.1.1](https://github.com/P4suta/terminfokit/compare/v0.1.0...v0.1.1) - 2026-10-26
+
+### Fixed
+
+- support Rust 1.98 clippy ([#25](https://github.com/P4suta/terminfokit/pull/25))
+
+### Other
+
+- select verification by affected contracts ([#35](https://github.com/P4suta/terminfokit/pull/35))
+- *(secrets)* use scoped Doppler identities ([#37](https://github.com/P4suta/terminfokit/pull/37))
 ## 0.1.0 - 2026-08-03
 
 Initial release of the `terminfokit` library and six command-line binaries.
