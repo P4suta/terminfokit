@@ -64,7 +64,7 @@ jobs:
             .github/workflows/publish-crates.yml
             .github/workflows/sbom.yml
       - uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5  # v6.0.0
-      - uses: crate-ci/typos@7f9d0819ca1c008ade73f4b41fa9d258d48f605b  # v1.51.1
+      - uses: crate-ci/typos@4c8b7f51ca60df14e3c5ca82770dfbbe6c3dae85  # v1.52.0
         with:
           config: ./_typos.toml
       - run: cmp README.md crates/terminfokit/README.md
@@ -152,7 +152,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
         with:
           toolchain: stable
-      - uses: taiki-e/install-action@a4d3f3f761dcd95cce1b72cb61cb6d1963438177  # v2.87.30
+      - uses: taiki-e/install-action@b80e2bb2635f28eb98b9fce1e2f0887e1535c6b2  # v2.90.0
         with:
           tool: cargo-deny@0.20.2
       - run: cargo deny --all-features --locked check
