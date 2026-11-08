@@ -2,14 +2,6 @@
 #
 # SPDX-License-Identifier: MIT OR Apache-2.0
 
-# The upstream-recommended release-plz workflow. The one deviation, which
-# release-plz also documents, is the GitHub App token: the default GITHUB_TOKEN
-# cannot trigger other workflows, so CI would never run on a release pull
-# request and the `v*` tag would never start cargo-dist.
-#
-# `publish = false` in release-plz.toml keeps publication with cargo-dist:
-# release-plz only creates the tag, and v-release.yml builds, signs, and
-# publishes from it.
 name: Release-plz
 
 on:
@@ -26,29 +18,20 @@ concurrency:
 jobs:
   release:
     permissions:
-      id-token: write
+      contents: read # Read source under docs/adr/sync-release-app-credentials-to-the-protected-environment.md.
     name: Release-plz release
-    if: ${{ github.repository_owner == 'P4suta' }}
+    if: github.repository_id == '1319932552' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: release-plz
+    env:
+      APP_INPUTS_VALID: >-
+        ${{ secrets.RELEASE_APP_CLIENT_ID != '' &&
+        !startsWith(secrets.RELEASE_APP_CLIENT_ID, '${') &&
+        secrets.RELEASE_APP_PRIVATE_KEY != '' &&
+        !startsWith(secrets.RELEASE_APP_PRIVATE_KEY, '${') }}
     steps:
-      - name: Fetch automation credentials
-        id: doppler_automation_0
-        uses: dopplerhq/secrets-fetch-action@451892f16195f9ac360e1a5bcbf0b5fd0e957534
-        with:
-          auth-method: oidc
-          doppler-identity-id: ${{ vars.DOPPLER_AUTOMATION_IDENTITY_ID }}
-          doppler-project: terminfokit
-          doppler-config: automation
-          inject-env-vars: false
       - name: Reject missing or unresolved automation credentials
-        if: >-
-          ${{ steps.doppler_automation_0.outcome == 'success' && (
-          steps.doppler_automation_0.outputs.GITHUB_APP_CLIENT_ID == '' ||
-          startsWith(steps.doppler_automation_0.outputs.GITHUB_APP_CLIENT_ID, '${') ||
-          steps.doppler_automation_0.outputs.GITHUB_APP_PRIVATE_KEY == '' ||
-          startsWith(steps.doppler_automation_0.outputs.GITHUB_APP_PRIVATE_KEY, '${')
-          ) }}
+        if: env.APP_INPUTS_VALID != 'true'
         shell: bash
         run: exit 1
 
@@ -56,8 +39,10 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510  # v3.3.0
         with:
-          client-id: ${{ steps.doppler_automation_0.outputs.GITHUB_APP_CLIENT_ID }}
-          private-key: ${{ steps.doppler_automation_0.outputs.GITHUB_APP_PRIVATE_KEY }}
+          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
           permission-contents: write
 
       - name: Checkout repository
@@ -67,9 +52,9 @@ jobs:
           persist-credentials: false
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
-        with:
-          toolchain: stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
 
       - name: Create release tag
         uses: release-plz/action@7ef5e4d4b0420630cfcaeb182c01e13651d4c577  # v0.5.145
@@ -80,35 +65,24 @@ jobs:
 
   release-pr:
     permissions:
-      id-token: write
+      contents: read # Read source under docs/adr/sync-release-app-credentials-to-the-protected-environment.md.
     name: Release-plz PR
-    # Ordered after `release` so a release pull request is never opened for a
-    # version that is being tagged in the same run.
     needs: release
-    if: ${{ always() && github.repository_owner == 'P4suta' }}
+    if: always() && github.repository_id == '1319932552' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: release-plz
+    env:
+      APP_INPUTS_VALID: >-
+        ${{ secrets.RELEASE_APP_CLIENT_ID != '' &&
+        !startsWith(secrets.RELEASE_APP_CLIENT_ID, '${') &&
+        secrets.RELEASE_APP_PRIVATE_KEY != '' &&
+        !startsWith(secrets.RELEASE_APP_PRIVATE_KEY, '${') }}
     concurrency:
       group: release-plz-pr-${{ github.ref }}
       cancel-in-progress: false
     steps:
-      - name: Fetch automation credentials
-        id: doppler_automation_0
-        uses: dopplerhq/secrets-fetch-action@451892f16195f9ac360e1a5bcbf0b5fd0e957534
-        with:
-          auth-method: oidc
-          doppler-identity-id: ${{ vars.DOPPLER_AUTOMATION_IDENTITY_ID }}
-          doppler-project: terminfokit
-          doppler-config: automation
-          inject-env-vars: false
       - name: Reject missing or unresolved automation credentials
-        if: >-
-          ${{ steps.doppler_automation_0.outcome == 'success' && (
-          steps.doppler_automation_0.outputs.GITHUB_APP_CLIENT_ID == '' ||
-          startsWith(steps.doppler_automation_0.outputs.GITHUB_APP_CLIENT_ID, '${') ||
-          steps.doppler_automation_0.outputs.GITHUB_APP_PRIVATE_KEY == '' ||
-          startsWith(steps.doppler_automation_0.outputs.GITHUB_APP_PRIVATE_KEY, '${')
-          ) }}
+        if: env.APP_INPUTS_VALID != 'true'
         shell: bash
         run: exit 1
 
@@ -116,8 +90,10 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510  # v3.3.0
         with:
-          client-id: ${{ steps.doppler_automation_0.outputs.GITHUB_APP_CLIENT_ID }}
-          private-key: ${{ steps.doppler_automation_0.outputs.GITHUB_APP_PRIVATE_KEY }}
+          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
           permission-contents: write
           permission-pull-requests: write
 
@@ -128,9 +104,9 @@ jobs:
           persist-credentials: false
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
-        with:
-          toolchain: stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
 
       - name: Open or update release PR
         uses: release-plz/action@7ef5e4d4b0420630cfcaeb182c01e13651d4c577  # v0.5.145
