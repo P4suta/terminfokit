@@ -41,7 +41,7 @@ highlight = "all"
 multiple-versions = "deny"
 multiple-versions-include-dev = true
 skip = [
-  { crate = "nix@0.30.1", reason = "atomic-write-file 0.3 still pins nix 0.30 while terminfokit-cli uses nix 0.31; both are Unix-only and this collapses when atomic-write-file bumps" },
+  { crate = "nix@=0.31.3", reason = "atomic-write-file 0.3.1 requires nix 0.31 on Unix. Remove this exception when it supports the CLI's nix 0.32." },
 ]
 skip-tree = []
 wildcards = "deny"
